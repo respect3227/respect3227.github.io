@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 石定睿 · 个人技术站点
 
 > https://shidingrui.github.io
@@ -27,3 +28,6 @@
 - 纯 HTML / CSS / JavaScript
 - 部署于 GitHub Pages
 - GitHub Actions 自动部署
+=======
+# shidingrui.github.io
+>>>>>>> edc8a441b57321cdd597d70f7fbfb45c78b724bc
