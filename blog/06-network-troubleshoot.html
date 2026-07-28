@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>常见网络故障排查思路与方法 · 石定睿</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .article { max-width: 780px; margin: 0 auto; padding: 64px 24px; }
+        .article h1 { font-size: 1.8rem; margin-bottom: 8px; }
+        .article .meta { color: #888; font-size: 0.9rem; margin-bottom: 32px; }
+        .article h2 { font-size: 1.3rem; margin: 32px 0 12px; color: #1a73e8; }
+        .article p { margin-bottom: 12px; color: #444; line-height: 1.8; }
+        .article table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        .article th, .article td { border: 1px solid #e0e0e0; padding: 8px 12px; text-align: left; font-size: 0.92rem; }
+        .article th { background: #f8f9fa; }
+        .back-link { display: inline-block; margin-bottom: 24px; color: #1a73e8; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <article class="article">
+        <a href="index.html" class="back-link">← 返回博客列表</a>
+        <h1>常见网络故障排查思路与方法</h1>
+        <div class="meta">2026-08-05 · 网络 · 石定睿</div>
+
+        <h2>排查思路：先定位 → 后排查 → 再解决</h2>
+
+        <table>
+            <tr><th>故障现象</th><th>排查步骤</th></tr>
+            <tr><td>网页打不开</td><td>ping 网关 → ping 外网 → nslookup 测 DNS → 检查防火墙</td></tr>
+            <tr><td>端口不通</td><td>netstat 看端口是否监听 → telnet 测试 → 检查防火墙规则</td></tr>
+            <tr><td>IP 冲突</td><td>arp -a 查 MAC → 改 IP 或排查冲突设备</td></tr>
+            <tr><td>间歇性断网</td><td>dmesg 看网卡日志 → 换网线/端口 → 查交换机日志</td></tr>
+            <tr><td>服务无法访问</td><td>systemctl status → 看服务日志 → 检查端口是否被占用</td></tr>
+        </table>
+
+        <p style="margin-top:40px;color:#888;">本文持续完善中……</p>
+    </article>
+</body>
+</html>

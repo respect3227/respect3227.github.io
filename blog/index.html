@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>技术博客 · 石定睿</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .blog-page { max-width: 900px; margin: 0 auto; padding: 64px 24px; }
+        .blog-page h1 { font-size: 2rem; margin-bottom: 8px; }
+        .blog-page .subtitle { color: #666; margin-bottom: 40px; }
+        .post-item {
+            padding: 24px 0; border-bottom: 1px solid #e0e0e0;
+        }
+        .post-item:last-child { border-bottom: none; }
+        .post-item h2 { font-size: 1.2rem; margin-bottom: 6px; }
+        .post-item h2 a { color: #1a73e8; text-decoration: none; }
+        .post-item h2 a:hover { text-decoration: underline; }
+        .post-meta { font-size: 0.88rem; color: #888; margin-bottom: 8px; }
+        .post-desc { color: #555; line-height: 1.7; }
+        .back-link { display: inline-block; margin-bottom: 32px; color: #1a73e8; text-decoration: none; font-size: 0.95rem; }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="blog-page">
+        <a href="../index.html" class="back-link">← 返回主页</a>
+        <h1>技术博客</h1>
+        <p class="subtitle">记录运维部署与开发实践中的踩坑和心得，持续输出中</p>
+
+        <div class="post-list">
+            <div class="post-item">
+                <h2><a href="01-linux-basics.html">Linux 基础命令速查手册</a></h2>
+                <div class="post-meta">2026-07-20 · Linux</div>
+                <div class="post-desc">实施工程师必备的 Linux 命令大全，涵盖文件操作、系统管理、权限配置、网络诊断等常用命令。</div>
+            </div>
+            <div class="post-item">
+                <h2><a href="02-docker-guide.html">Docker 容器化部署入门实战</a></h2>
+                <div class="post-meta">2026-07-25 · Docker</div>
+                <div class="post-desc">从零开始学习 Docker，理解镜像、容器、Dockerfile、docker-compose 等核心概念，附完整部署示例。</div>
+            </div>
+            <div class="post-item">
+                <h2><a href="03-nginx-config.html">Nginx 反向代理与静态站点配置</a></h2>
+                <div class="post-meta">2026-07-28 · Nginx</div>
+                <div class="post-desc">Nginx 常用配置详解：静态文件托管、反向代理、负载均衡、HTTPS 证书配置。</div>
+            </div>
+            <div class="post-item">
+                <h2><a href="04-mysql-ops.html">MySQL 数据备份与迁移实操</a></h2>
+                <div class="post-meta">2026-07-30 · MySQL</div>
+                <div class="post-desc">mysqldump 备份策略、定时备份脚本、跨服务器数据迁移、常见问题处理。</div>
+            </div>
+            <div class="post-item">
+                <h2><a href="05-shell-scripts.html">Shell 自动化脚本最佳实践</a></h2>
+                <div class="post-meta">2026-08-02 · Shell</div>
+                <div class="post-desc">从零写实用 Shell 脚本：服务器巡检、日志清理、服务监控、自动备份等场景。</div>
+            </div>
+            <div class="post-item">
+                <h2><a href="06-network-troubleshoot.html">常见网络故障排查思路与方法</a></h2>
+                <div class="post-meta">2026-08-05 · 网络</div>
+                <div class="post-desc">面向实施工程师的网络排障指南：DNS、端口、防火墙、IP冲突等 10+ 种常见故障解决方案。</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

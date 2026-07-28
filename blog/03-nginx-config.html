@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nginx 反向代理与静态站点配置 · 石定睿</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .article { max-width: 780px; margin: 0 auto; padding: 64px 24px; }
+        .article h1 { font-size: 1.8rem; margin-bottom: 8px; }
+        .article .meta { color: #888; font-size: 0.9rem; margin-bottom: 32px; }
+        .article h2 { font-size: 1.3rem; margin: 32px 0 12px; color: #1a73e8; }
+        .article p { margin-bottom: 12px; color: #444; line-height: 1.8; }
+        .article pre { background: #f4f4f4; padding: 16px 20px; border-radius: 6px; overflow-x: auto; font-size: 0.9rem; line-height: 1.6; }
+        .article code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+        .article pre code { background: none; padding: 0; }
+        .back-link { display: inline-block; margin-bottom: 24px; color: #1a73e8; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <article class="article">
+        <a href="index.html" class="back-link">← 返回博客列表</a>
+        <h1>Nginx 反向代理与静态站点配置</h1>
+        <div class="meta">2026-07-28 · Nginx · 石定睿</div>
+        <p>Nginx 是高性能的 Web 服务器和反向代理服务器。本文整理常用配置场景。</p>
+        <h2>静态站点托管</h2>
+        <pre><code>server {
+    listen 80;
+    server_name example.com;
+    root /var/www/html;
+    index index.html;
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}</code></pre>
+        <h2>反向代理</h2>
+        <pre><code>server {
+    listen 80;
+    server_name api.example.com;
+    location / {
+        proxy_pass http://localhost:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}</code></pre>
+        <p style="margin-top:40px;color:#888;">本文持续完善中……</p>
+    </article>
+</body>
+</html>

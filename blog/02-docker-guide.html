@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker 容器化部署入门实战 · 石定睿</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .article { max-width: 780px; margin: 0 auto; padding: 64px 24px; }
+        .article h1 { font-size: 1.8rem; margin-bottom: 8px; }
+        .article .meta { color: #888; font-size: 0.9rem; margin-bottom: 32px; }
+        .article h2 { font-size: 1.3rem; margin: 32px 0 12px; color: #1a73e8; }
+        .article p { margin-bottom: 12px; color: #444; line-height: 1.8; }
+        .article pre { background: #f4f4f4; padding: 16px 20px; border-radius: 6px; overflow-x: auto; font-size: 0.9rem; line-height: 1.6; }
+        .article code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+        .article pre code { background: none; padding: 0; }
+        .article ul { margin: 8px 0 16px 24px; color: #444; line-height: 1.8; }
+        .back-link { display: inline-block; margin-bottom: 24px; color: #1a73e8; text-decoration: none; }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <article class="article">
+        <a href="index.html" class="back-link">← 返回博客列表</a>
+        <h1>Docker 容器化部署入门实战</h1>
+        <div class="meta">2026-07-25 · Docker · 石定睿</div>
+
+        <h2>什么是 Docker？</h2>
+        <p>Docker 是一个容器化平台，可以把应用和依赖打包成一个"集装箱"，在任何 Linux 服务器上都能跑。对实施工程师来说，Docker 最大的好处是：<strong>环境一致性</strong>——开发环境什么样，部署环境就什么样，彻底解决"我这能跑你那儿不行"的问题。</p>
+
+        <h2>核心概念</h2>
+        <ul>
+            <li><strong>镜像（Image）</strong>：容器的模板，只读。类似 ISO 系统安装盘。</li>
+            <li><strong>容器（Container）</strong>：镜像的运行实例。类似你用 ISO 装好的虚拟机。</li>
+            <li><strong>Dockerfile</strong>：镜像的"配方"文件，定义怎么构建镜像。</li>
+            <li><strong>docker-compose.yml</strong>：编排多个容器的配置文件。</li>
+        </ul>
+
+        <h2>安装 Docker</h2>
+        <pre><code># Ubuntu 一键安装
+curl -fsSL https://get.docker.com | bash
+
+# 启动并设置开机自启
+systemctl start docker
+systemctl enable docker
+
+# 验证安装
+docker --version
+docker run hello-world</code></pre>
+
+        <h2>常用命令</h2>
+        <pre><code># 容器管理
+docker ps                    # 运行中的容器
+docker ps -a                 # 所有容器（含已停止）
+docker start/stop/restart ID # 启停
+docker logs -f ID            # 实时查看日志
+docker exec -it ID bash      # 进入容器内部
+docker rm ID                 # 删除容器
+
+# 镜像管理
+docker images                # 本地镜像列表
+docker pull nginx:latest     # 拉取镜像
+docker rmi ID                # 删除镜像
+docker build -t myapp:v1 .   # 构建镜像</code></pre>
+
+        <h2>实战：用 Docker Compose 部署 Nginx + 应用</h2>
+        <pre><code># docker-compose.yml
+version: '3.8'
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./html:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    restart: always
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+    restart: always
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: StrongPass123!
+      MYSQL_DATABASE: myapp
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: always
+
+volumes:
+  mysql_data:</code></pre>
+
+        <pre><code># 启动所有服务
+docker-compose up -d
+
+# 查看运行状态
+docker-compose ps
+
+# 查看日志
+docker-compose logs -f
+
+# 停止所有服务
+docker-compose down</code></pre>
+
+        <p style="margin-top:40px;color:#888;font-size:0.9rem;">
+            持续更新中，欢迎交流指正。联系邮箱：respect431@163.com
+        </p>
+    </article>
+</body>
+</html>

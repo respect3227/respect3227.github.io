@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shell 自动化脚本最佳实践 · 石定睿</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .article { max-width: 780px; margin: 0 auto; padding: 64px 24px; }
+        .article h1 { font-size: 1.8rem; margin-bottom: 8px; }
+        .article .meta { color: #888; font-size: 0.9rem; margin-bottom: 32px; }
+        .article h2 { font-size: 1.3rem; margin: 32px 0 12px; color: #1a73e8; }
+        .article p { margin-bottom: 12px; color: #444; line-height: 1.8; }
+        .article pre { background: #f4f4f4; padding: 16px 20px; border-radius: 6px; overflow-x: auto; font-size: 0.9rem; line-height: 1.6; }
+        .article code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+        .article pre code { background: none; padding: 0; }
+        .back-link { display: inline-block; margin-bottom: 24px; color: #1a73e8; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <article class="article">
+        <a href="index.html" class="back-link">← 返回博客列表</a>
+        <h1>Shell 自动化脚本最佳实践</h1>
+        <div class="meta">2026-08-02 · Shell · 石定睿</div>
+        <h2>服务器巡检脚本</h2>
+        <pre><code>#!/bin/bash
+echo "=== 磁盘 ===" && df -h
+echo "=== 内存 ===" && free -h
+echo "=== CPU ===" && uptime
+echo "=== 端口 ===" && netstat -tlnp</code></pre>
+        <h2>日志清理脚本</h2>
+        <pre><code>#!/bin/bash
+# 删除 7 天前的日志
+find /var/log -name "*.log" -mtime +7 -delete
+echo "清理完成: $(date)"</code></pre>
+        <p style="margin-top:40px;color:#888;">本文持续完善中……</p>
+    </article>
+</body>
+</html>
