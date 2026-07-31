@@ -382,3 +382,79 @@ footer {
     .about-stats { grid-template-columns: 1fr; }
     .contact-grid { grid-template-columns: 1fr; }
 }
+/* 修复博客文章代码、表格显示异常 */
+.article-content code,
+.blog-content code,
+.post-content code,
+main code,
+td code,
+li code,
+p code {
+  background: #1f2937 !important;
+  color: #e5e7eb !important;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: Consolas, Monaco, "Courier New", monospace;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+.article-content pre,
+.blog-content pre,
+.post-content pre,
+main pre {
+  background: #111827 !important;
+  color: #e5e7eb !important;
+  padding: 16px;
+  border-radius: 10px;
+  overflow-x: auto;
+  border: 1px solid #374151;
+}
+
+.article-content pre code,
+.blog-content pre code,
+.post-content pre code,
+main pre code {
+  background: transparent !important;
+  color: #e5e7eb !important;
+  padding: 0;
+  white-space: pre;
+}
+
+.article-content table,
+.blog-content table,
+.post-content table,
+main table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  color: #e5e7eb;
+}
+
+.article-content th,
+.article-content td,
+.blog-content th,
+.blog-content td,
+.post-content th,
+.post-content td,
+main th,
+main td {
+  border: 1px solid #374151;
+  padding: 10px 12px;
+  color: #e5e7eb !important;
+}
+
+.article-content th,
+.blog-content th,
+.post-content th,
+main th {
+  background: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+.article-content td,
+.blog-content td,
+.post-content td,
+main td {
+  background: transparent !important;
+}
