@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oracle 数据库从 0 到精通 · 语法与函数速查</title>
+<meta name="description" content="Oracle 数据库完整教程：全部 SQL/PL-SQL 语法、示例与函数库(可搜索)，从入门到精通。">
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<style>
+:root{
+  --oracle:#C74634; --oracle-dark:#a33; --blue:#1a73e8;
+  --bg:#f4f6f9; --card:#fff; --border:#e3e8ef;
+  --text:#1a1a2e; --text-2:#555; --text-3:#8a93a3;
+  --code-bg:#2d2d2d; --shadow:0 2px 12px rgba(20,30,60,.06);
+  --shadow-hover:0 8px 28px rgba(20,30,60,.12);
+  --radius:10px;
+}
+*{box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.7;margin:0;-webkit-font-smoothing:antialiased}
+
+/* ===== 顶部导航 ===== */
+.topbar{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.topbar-inner{max-width:1320px;margin:0 auto;padding:0 24px;height:62px;display:flex;align-items:center;gap:18px}
+.back-link{color:var(--text-2);text-decoration:none;font-size:.92rem;display:flex;align-items:center;gap:6px;white-space:nowrap;transition:.2s}
+.back-link:hover{color:var(--oracle)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.05rem;white-space:nowrap}
+.brand-logo{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--oracle),#e8704f);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:800;box-shadow:0 2px 8px rgba(199,70,52,.35)}
+.brand small{font-weight:400;color:var(--text-3);font-size:.78rem;display:block;margin-top:-3px}
+.search-global{flex:1;max-width:420px;position:relative}
+.search-global input{width:100%;height:38px;border:1.5px solid var(--border);border-radius:20px;padding:0 16px 0 40px;font-size:.9rem;background:var(--bg);transition:.2s;outline:none}
+.search-global input:focus{border-color:var(--oracle);background:#fff;box-shadow:0 0 0 3px rgba(199,70,52,.1)}
+.search-global i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:.85rem}
+.topbar-actions{display:flex;gap:8px;margin-left:auto}
+.icon-btn{width:38px;height:38px;border-radius:50%;border:none;background:var(--bg);color:var(--text-2);cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;font-size:.95rem}
+.icon-btn:hover{background:var(--oracle);color:#fff}
+@media(max-width:760px){.brand small{display:none}.search-global{display:none}}
+
+/* ===== Hero ===== */
+.hero{max-width:1320px;margin:0 auto;padding:42px 24px 26px}
+.hero h1{font-size:clamp(1.8rem,4vw,2.6rem);margin:0 0 10px;background:linear-gradient(120deg,var(--oracle),#e8704f 60%,var(--blue));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1.2}
+.hero p.lead{color:var(--text-2);font-size:1.02rem;margin:0 0 22px;max-width:760px}
+.stats{display:flex;flex-wrap:wrap;gap:14px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 22px;min-width:130px;box-shadow:var(--shadow);transition:.2s}
+.stat:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover)}
+.stat .num{font-size:1.6rem;font-weight:800;color:var(--oracle);display:block;line-height:1}
+.stat .lbl{font-size:.82rem;color:var(--text-3);margin-top:4px;display:block}
+.stat i{color:var(--blue);margin-right:4px}
+
+/* ===== 主体布局 ===== */
+.layout{max-width:1320px;margin:0 auto;padding:0 24px 60px;display:grid;grid-template-columns:250px 1fr;gap:28px;align-items:start}
+.sidebar{position:sticky;top:78px;max-height:calc(100vh - 96px);overflow-y:auto;padding-right:6px}
+.sidebar::-webkit-scrollbar{width:6px}
+.sidebar::-webkit-scrollbar-thumb{background:#d0d6e0;border-radius:3px}
+.sidebar h4{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin:14px 0 8px;padding-left:8px}
+.side-link{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;color:var(--text-2);text-decoration:none;font-size:.88rem;cursor:pointer;transition:.15s;border-left:2px solid transparent}
+.side-link i{width:16px;color:var(--text-3);font-size:.82rem}
+.side-link:hover{background:var(--card);color:var(--oracle)}
+.side-link.active{background:rgba(199,70,52,.08);color:var(--oracle);font-weight:600;border-left-color:var(--oracle)}
+.side-link.active i{color:var(--oracle)}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{position:fixed;left:-280px;top:62px;z-index:90;width:260px;background:#fff;height:calc(100vh - 62px);padding:16px;transition:.25s;box-shadow:2px 0 16px rgba(0,0,0,.1)}.sidebar.open{left:0}}
+
+/* 移动端菜单按钮 */
+.mobile-menu{display:none}
+@media(max-width:900px){.mobile-menu{display:flex}}
+
+/* ===== 章节卡片 ===== */
+.section-block{scroll-margin-top:78px;margin-bottom:46px}
+.sec-head{display:flex;align-items:center;gap:12px;margin-bottom:8px;padding-bottom:12px;border-bottom:2px solid var(--border)}
+.sec-head .ico{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--oracle),#e8704f);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;box-shadow:0 3px 10px rgba(199,70,52,.3)}
+.sec-head h2{font-size:1.35rem;margin:0}
+.sec-head .desc{font-size:.85rem;color:var(--text-3);margin-top:2px}
+
+/* 语法条目卡片 */
+.item-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-top:16px;overflow:hidden;transition:.2s;scroll-margin-top:78px}
+.item-card:hover{box-shadow:var(--shadow-hover);border-color:#d4dae5}
+.item-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 18px 6px;flex-wrap:wrap}
+.item-name{font-size:1.02rem;font-weight:700;margin:0}
+.item-name .anchor{color:var(--text-3);font-weight:400;margin-left:6px;font-size:.78rem}
+.tags{display:flex;flex-wrap:wrap;gap:5px}
+.tag{font-size:.7rem;padding:2px 8px;border-radius:10px;background:#eef2f7;color:var(--text-2);font-weight:500}
+.tag.t-key{background:#fff0ee;color:var(--oracle)}
+.item-desc{padding:0 18px 10px;color:var(--text-2);font-size:.9rem}
+.item-syntax{margin:6px 18px;background:#fff8f6;border-left:3px solid var(--oracle);padding:8px 12px;border-radius:4px;font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-size:.82rem;color:#7a2018;overflow-x:auto;white-space:pre-wrap;word-break:break-word}
+.label{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);font-weight:700;margin:14px 18px 4px;display:flex;align-items:center;gap:6px}
+.label i{font-size:.8rem;color:var(--blue)}
+pre[class*="language-"]{margin:0 18px 10px;border-radius:8px;font-size:.82rem;max-height:340px}
+pre[class*="language-"] code{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace !important;line-height:1.55 !important}
+.code-wrap{position:relative;margin:0 18px 10px}
+.code-wrap pre{margin:0}
+.copy-btn{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.12);color:#eee;border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:4px 9px;font-size:.72rem;cursor:pointer;opacity:0;transition:.2s;backdrop-filter:blur(4px)}
+.code-wrap:hover .copy-btn{opacity:1}
+.copy-btn:hover{background:var(--oracle);border-color:var(--oracle);color:#fff}
+.copy-btn.copied{background:#22c55e;border-color:#22c55e}
+.item-tips{margin:0 18px 14px;padding:9px 12px;background:#f0f6ff;border-radius:6px;font-size:.82rem;color:#3a5a8c;display:flex;gap:8px}
+.item-tips i{color:var(--blue);margin-top:3px}
+.item-result{margin:0 18px 12px;padding:8px 12px;background:#f0fdf4;border-radius:6px;font-size:.82rem;color:#166534;font-family:monospace}
+.item-result::before{content:"结果: ";font-weight:700;color:#15803d}
+
+/* ===== 函数库 ===== */
+.func-section{scroll-margin-top:78px}
+.func-toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:18px;position:sticky;top:70px;background:var(--bg);padding:8px 0;z-index:10}
+.func-search{flex:1;min-width:240px;position:relative}
+.func-search input{width:100%;height:42px;border:1.5px solid var(--border);border-radius:22px;padding:0 18px 0 42px;font-size:.92rem;background:#fff;outline:none;transition:.2s}
+.func-search input:focus{border-color:var(--oracle);box-shadow:0 0 0 3px rgba(199,70,52,.1)}
+.func-search i{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--text-3)}
+.func-search .clear{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:#eef2f7;border:none;width:24px;height:24px;border-radius:50%;cursor:pointer;color:var(--text-3);display:none}
+.func-search.has-text .clear{display:flex;align-items:center;justify-content:center}
+.func-cats{display:flex;gap:6px;flex-wrap:wrap}
+.cat-btn{padding:7px 14px;border:1.5px solid var(--border);border-radius:18px;background:#fff;color:var(--text-2);font-size:.82rem;cursor:pointer;transition:.15s;font-weight:500}
+.cat-btn:hover{border-color:var(--oracle);color:var(--oracle)}
+.cat-btn.active{background:var(--oracle);border-color:var(--oracle);color:#fff}
+.func-count{font-size:.82rem;color:var(--text-3);padding:0 4px}
+.func-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
+.func-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;transition:.2s;scroll-margin-top:140px}
+.func-card:hover{box-shadow:var(--shadow-hover);border-color:#d4dae5;transform:translateY(-1px)}
+.func-card .fname{font-weight:700;font-size:.98rem;color:var(--oracle);font-family:"SFMono-Regular",Consolas,monospace}
+.func-card .fsyn{display:block;margin:4px 0 8px;padding:6px 8px;background:#1e1e2e;color:#9eec91;border-radius:5px;font-family:monospace;font-size:.78rem;overflow-x:auto;white-space:nowrap}
+.func-card .fdesc{color:var(--text-2);font-size:.85rem;margin-bottom:8px}
+.func-card .fex{background:#2d2d2d;color:#ddd;border-radius:6px;padding:8px 10px;font-family:monospace;font-size:.76rem;overflow-x:auto;white-space:nowrap;margin-bottom:6px}
+.func-card .fres{font-size:.76rem;color:#15803d;background:#f0fdf4;padding:4px 8px;border-radius:4px;font-family:monospace;display:inline-block}
+.func-card .ftags{margin-top:8px;display:flex;gap:4px;flex-wrap:wrap}
+.func-card .ftag{font-size:.66rem;padding:1px 7px;border-radius:8px;background:#eef2f7;color:var(--text-3)}
+.no-result{grid-column:1/-1;text-align:center;padding:40px;color:var(--text-3)}
+.no-result i{font-size:2rem;display:block;margin-bottom:10px;color:#d0d6e0}
+mark{background:#ffe9a8;color:inherit;border-radius:2px;padding:0 1px}
+
+/* 回到顶部 */
+.to-top{position:fixed;right:24px;bottom:24px;width:46px;height:46px;border-radius:50%;background:var(--oracle);color:#fff;border:none;cursor:pointer;box-shadow:0 6px 20px rgba(199,70,52,.4);opacity:0;visibility:hidden;transition:.25s;z-index:80;font-size:1rem}
+.to-top.show{opacity:1;visibility:visible}
+.to-top:hover{transform:translateY(-3px)}
+
+/* 页脚 */
+.doc-footer{text-align:center;padding:28px 24px;color:var(--text-3);font-size:.84rem;border-top:1px solid var(--border);background:#fff}
+.doc-footer a{color:var(--oracle);text-decoration:none}
+
+/* 暗色代码块圆角修正 */
+:not(pre)>code[class*="language-"]{background:#1e1e2e;color:#ddd;padding:2px 5px;border-radius:4px;font-size:.85rem}
+</style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<nav class="topbar">
+  <div class="topbar-inner">
+    <button class="icon-btn mobile-menu" id="menuToggle" aria-label="目录"><i class="fas fa-bars"></i></button>
+    <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i>博客</a>
+    <div class="brand">
+      <span class="brand-logo">OR</span>
+      <span>Oracle 全解<small>语法 · 示例 · 函数速查</small></span>
+    </div>
+    <div class="search-global">
+      <i class="fas fa-search"></i>
+      <input id="globalSearch" type="search" placeholder="搜索语法或函数，如 MERGE / NVL / 分区..." autocomplete="off">
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="goFunc" title="跳转函数库"><i class="fas fa-function"></i></button>
+      <button class="icon-btn" id="goTop" title="返回顶部"><i class="fas fa-arrow-up"></i></button>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<header class="hero">
+  <h1>Oracle 数据库从 0 到精通</h1>
+  <p class="lead">一份覆盖 Oracle 全部 SQL/PL-SQL 语法、配套可运行示例、以及完整可搜索函数库的速查手册。从体系结构、查询、DDL/DML/DCL/TCL 到 PL/SQL 与高级特性，循序渐进。</p>
+  <div class="stats">
+    <div class="stat"><span class="num" id="stSyntax">0</span><span class="lbl"><i class="fas fa-book"></i>语法条目</span></div>
+    <div class="stat"><span class="num" id="stFunc">0</span><span class="lbl"><i class="fas fa-function"></i>内置函数</span></div>
+    <div class="stat"><span class="num" id="stCat">0</span><span class="lbl"><i class="fas fa-folder"></i>知识分类</span></div>
+    <div class="stat"><span class="num" id="stEx">0</span><span class="lbl"><i class="fas fa-code"></i>代码示例</span></div>
+  </div>
+</header>
+
+<!-- 主体 -->
+<div class="layout">
+  <!-- 侧边栏 -->
+  <aside class="sidebar" id="sidebar">
+    <h4>语法章节</h4>
+    <div id="sideSyntax"></div>
+    <h4>函数库</h4>
+    <div id="sideFunc"></div>
+  </aside>
+
+  <!-- 主内容 -->
+  <main id="main"></main>
+</div>
+
+<button class="to-top" id="toTop" aria-label="返回顶部"><i class="fas fa-arrow-up"></i></button>
+
+<footer class="doc-footer">
+  <p>Oracle 数据库从 0 到精通 · 涵盖全部语法、示例与函数库 · 数据字典驱动渲染</p>
+  <p>提示：本页所有 SQL 示例基于经典 <code>SCOTT.EMP / DEPT</code> 示例表，可直接在 SQL*Plus 中练习。</p>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+<script src="oracle-data.js"></script>
+<script>
+(function(){
+  "use strict";
+  const D = window.ORACLE_DATA;
+  const $ = s => document.querySelector(s);
+  const el = (tag, cls, html) => { const e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; };
+  const esc = s => String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  /* ---------- 统计 ---------- */
+  let synCount=0, exCount=0;
+  D.syntax.forEach(s=>{ synCount+=s.items.length; s.items.forEach(()=>exCount++); });
+  let funcCount=0;
+  D.functions.forEach(c=>funcCount+=c.items.length);
+  $('#stSyntax').textContent = synCount;
+  $('#stFunc').textContent = funcCount;
+  $('#stCat').textContent = D.syntax.length + D.functions.length;
+  $('#stEx').textContent = exCount + funcCount;
+
+  /* ---------- 渲染语法 ---------- */
+  const main = $('#main');
+  D.syntax.forEach(sec=>{
+    const block = el('section','section-block');
+    block.id = 'sec-'+sec.id;
+    block.innerHTML = `
+      <div class="sec-head">
+        <div class="ico"><i class="fas ${sec.icon}"></i></div>
+        <div>
+          <h2>${esc(sec.title)}</h2>
+          <div class="desc">${esc(sec.desc)}</div>
+        </div>
+      </div>`;
+    sec.items.forEach(it=>{
+      const card = el('div','item-card');
+      card.id = 'item-'+slug(it.name);
+      const tags = (it.tags||[]).map((t,i)=>`<span class="tag${i===0?' t-key':''}">${esc(t)}</span>`).join('');
+      const tips = it.tips ? `<div class="item-tips"><i class="fas fa-lightbulb"></i><span>${esc(it.tips)}</span></div>` : '';
+      const result = it.result ? `<div class="item-result">${esc(it.result)}</div>` : '';
+      card.innerHTML = `
+        <div class="item-head">
+          <h3 class="item-name">${esc(it.name)}</h3>
+          <div class="tags">${tags}</div>
+        </div>
+        <div class="item-desc">${esc(it.desc)}</div>
+        <div class="item-syntax">${esc(it.syntax)}</div>
+        <div class="label"><i class="fas fa-play-circle"></i>示例</div>
+        <div class="code-wrap">
+          <button class="copy-btn"><i class="fas fa-copy"></i> 复制</button>
+          <pre><code class="language-sql">${esc(it.example)}</code></pre>
+        </div>
+        ${result}
+        ${tips}`;
+      block.appendChild(card);
+    });
+    main.appendChild(block);
+  });
+
+  /* ---------- 渲染函数库 ---------- */
+  const funcBlock = el('section','section-block func-section');
+  funcBlock.id = 'sec-functions';
+  funcBlock.innerHTML = `
+    <div class="sec-head">
+      <div class="ico"><i class="fas fa-function"></i></div>
+      <div>
+        <h2>内置函数速查库</h2>
+        <div class="desc">输入函数名/作用/标签即时筛选，支持模糊匹配。共 ${funcCount} 个函数。</div>
+      </div>
+    </div>
+    <div class="func-toolbar">
+      <div class="func-search" id="funcSearchWrap">
+        <i class="fas fa-search"></i>
+        <input id="funcSearch" type="search" placeholder="搜索函数名 / 作用 / 标签，如 NVL、日期、排名..." autocomplete="off">
+        <button class="clear" id="funcClear" aria-label="清除"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="func-cats" id="funcCats"></div>
+      <span class="func-count" id="funcCount"></span>
+    </div>
+    <div class="func-grid" id="funcGrid"></div>`;
+  main.appendChild(funcBlock);
+
+  // 函数分类按钮
+  const catsWrap = $('#funcCats');
+  const allBtn = el('button','cat-btn active','全部');
+  allBtn.dataset.cat = 'all';
+  catsWrap.appendChild(allBtn);
+  D.functions.forEach(c=>{
+    const b = el('button','cat-btn',`${c.category}`);
+    b.dataset.cat = c.category;
+    catsWrap.appendChild(b);
+  });
+
+  // 展平函数列表
+  const allFuncs = [];
+  D.functions.forEach(c=>c.items.forEach(f=>allFuncs.push(Object.assign({category:c.category, icon:c.icon}, f))));
+
+  const grid = $('#funcGrid');
+  const countEl = $('#funcCount');
+  let activeCat = 'all';
+  let kw = '';
+
+  function hl(text, key){
+    if(!key) return esc(text);
+    const idx = String(text).toLowerCase().indexOf(key.toLowerCase());
+    if(idx<0) return esc(text);
+    return esc(text.slice(0,idx)) + '<mark>' + esc(text.slice(idx,idx+key.length)) + '</mark>' + esc(text.slice(idx+key.length));
+  }
+
+  function renderFunc(){
+    grid.innerHTML = '';
+    const k = kw.trim().toLowerCase();
+    const list = allFuncs.filter(f=>{
+      const catOk = activeCat==='all' || f.category===activeCat;
+      if(!catOk) return false;
+      if(!k) return true;
+      return f.name.toLowerCase().includes(k) ||
+             f.desc.toLowerCase().includes(k) ||
+             f.syntax.toLowerCase().includes(k) ||
+             (f.tags||[]).some(t=>t.toLowerCase().includes(k));
+    });
+    countEl.textContent = `命中 ${list.length} / ${allFuncs.length}`;
+    if(list.length===0){
+      grid.innerHTML = `<div class="no-result"><i class="fas fa-magnifying-glass"></i>未找到匹配的函数，试试其他关键词。</div>`;
+      return;
+    }
+    const frag = document.createDocumentFragment();
+    list.forEach(f=>{
+      const card = el('div','func-card');
+      card.innerHTML = `
+        <div class="fname">${hl(f.name, kw)}</div>
+        <span class="fsyn">${esc(f.syntax)}</span>
+        <div class="fdesc">${hl(f.desc, kw)}</div>
+        <div class="fex">${esc(f.example)}</div>
+        <span class="fres">↳ ${esc(f.result||'')}</span>
+        <div class="ftags">${(f.tags||[]).map(t=>`<span class="ftag">${esc(t)}</span>`).join('')}</div>`;
+      frag.appendChild(card);
+    });
+    grid.appendChild(frag);
+  }
+  renderFunc();
+
+  // 函数搜索交互
+  const fsInput = $('#funcSearch');
+  const fsWrap = $('#funcSearchWrap');
+  fsInput.addEventListener('input', e=>{
+    kw = e.target.value;
+    fsWrap.classList.toggle('has-text', kw.length>0);
+    renderFunc();
+  });
+  $('#funcClear').addEventListener('click', ()=>{
+    fsInput.value=''; kw=''; fsWrap.classList.remove('has-text'); renderFunc(); fsInput.focus();
+  });
+  catsWrap.addEventListener('click', e=>{
+    const b = e.target.closest('.cat-btn');
+    if(!b) return;
+    catsWrap.querySelectorAll('.cat-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    activeCat = b.dataset.cat;
+    renderFunc();
+  });
+
+  /* ---------- 侧边栏 ---------- */
+  const sideSyn = $('#sideSyntax');
+  D.syntax.forEach(s=>{
+    const a = el('a','side-link');
+    a.innerHTML = `<i class="fas ${s.icon}"></i><span>${esc(s.title)}</span>`;
+    a.dataset.target = 'sec-'+s.id;
+    sideSyn.appendChild(a);
+  });
+  const sideFunc = $('#sideFunc');
+  D.functions.forEach(c=>{
+    const a = el('a','side-link');
+    a.innerHTML = `<i class="fas ${c.icon}"></i><span>${esc(c.category)}</span>`;
+    a.dataset.target = 'sec-functions';
+    sideFunc.appendChild(a);
+  });
+
+  // 平滑滚动 + 高亮
+  const sideLinks = document.querySelectorAll('.side-link');
+  sideLinks.forEach(a=>{
+    a.addEventListener('click', e=>{
+      e.preventDefault();
+      const t = document.getElementById(a.dataset.target);
+      if(t){ t.scrollIntoView({behavior:'smooth',block:'start'}); }
+      document.getElementById('sidebar').classList.remove('open');
+    });
+  });
+
+  // 滚动高亮当前章节
+  const sections = [...document.querySelectorAll('.section-block')];
+  const obs = new IntersectionObserver((entries)=>{
+    entries.forEach(en=>{
+      if(en.isIntersecting){
+        sideLinks.forEach(l=>l.classList.toggle('active', l.dataset.target===en.target.id));
+      }
+    });
+  }, {rootMargin:'-80px 0px -70% 0px'});
+  sections.forEach(s=>obs.observe(s));
+
+  /* ---------- 复制按钮 ---------- */
+  document.addEventListener('click', e=>{
+    const btn = e.target.closest('.copy-btn');
+    if(!btn) return;
+    const code = btn.parentElement.querySelector('code');
+    const text = code ? code.textContent : '';
+    const done = ()=>{
+      btn.classList.add('copied');
+      btn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+      setTimeout(()=>{ btn.classList.remove('copied'); btn.innerHTML='<i class="fas fa-copy"></i> 复制'; }, 1600);
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));
+    } else { fallbackCopy(text, done); }
+  });
+  function fallbackCopy(text, cb){
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); cb(); }catch(e){}
+    document.body.removeChild(ta);
+  }
+
+  /* ---------- 全局搜索 ---------- */
+  const gs = $('#globalSearch');
+  let gsTimer;
+  gs.addEventListener('input', e=>{
+    clearTimeout(gsTimer);
+    const v = e.target.value.trim();
+    if(!v) return;
+    gsTimer = setTimeout(()=>{
+      // 优先匹配语法条目，其次函数
+      const k = v.toLowerCase();
+      const synHit = D.syntax.flatMap(s=>s.items.map(it=>({sec:s,it})))
+        .find(x=>x.it.name.toLowerCase().includes(k) || x.it.tags.some(t=>t.toLowerCase().includes(k)) || x.it.syntax.toLowerCase().includes(k));
+      if(synHit){
+        const node = document.getElementById('item-'+slug(synHit.it.name));
+        if(node){ node.scrollIntoView({behavior:'smooth',block:'start'}); flash(node); return; }
+      }
+      // 函数
+      const fnHit = allFuncs.find(f=>f.name.toLowerCase().includes(k));
+      if(fnHit){
+        fsInput.value = v; kw = v; fsWrap.classList.add('has-text'); renderFunc();
+        document.getElementById('sec-functions').scrollIntoView({behavior:'smooth',block:'start'});
+      } else {
+        fsInput.value = v; kw = v; fsWrap.classList.add('has-text'); renderFunc();
+        document.getElementById('sec-functions').scrollIntoView({behavior:'smooth',block:'start'});
+      }
+    }, 280);
+  });
+  function flash(node){
+    node.style.transition='box-shadow .4s';
+    node.style.boxShadow='0 0 0 3px rgba(199,70,52,.5)';
+    setTimeout(()=>{ node.style.boxShadow=''; }, 1400);
+  }
+
+  /* ---------- 工具：slug ---------- */
+  function slug(s){
+    return String(s).toLowerCase()
+      .replace(/[^\w\u4e00-\u9fa5]+/g,'-')
+      .replace(/^-+|-+$/g,'');
+  }
+
+  /* ---------- 回到顶部 / 移动菜单 ---------- */
+  const toTop = $('#toTop');
+  window.addEventListener('scroll', ()=>{
+    toTop.classList.toggle('show', window.scrollY>500);
+  }, {passive:true});
+  toTop.addEventListener('click', ()=>window.scrollTo({top:0,behavior:'smooth'}));
+  $('#goTop').addEventListener('click', ()=>window.scrollTo({top:0,behavior:'smooth'}));
+  $('#goFunc').addEventListener('click', ()=>{
+    document.getElementById('sec-functions').scrollIntoView({behavior:'smooth',block:'start'});
+    setTimeout(()=>fsInput.focus(), 600);
+  });
+  $('#menuToggle').addEventListener('click', ()=>{
+    document.getElementById('sidebar').classList.toggle('open');
+  });
+
+  /* ---------- 代码高亮 ---------- */
+  if(window.Prism){ Prism.highlightAllUnder(main); }
+})();
+</script>
+</body>
+</html>
