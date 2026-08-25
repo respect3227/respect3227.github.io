@@ -1477,14 +1477,14 @@ END;`
       const condTrans = translateCondition(condRaw);
       const resultTrans = resultRaw.replace(/^'|'$/g, '');
 
-      narrative += `如果 <span class="tl-clause">${condTrans}</span>，那么这条记录就取值 <span class="tl-func">${resultTrans}</span>`;
+      narrative += `如果<span class="tl-clause">${condTrans}</span>，那么这条记录就取值 <span class="tl-func">${resultTrans}</span>`;
 
       const whenMatches = [...rawSql.matchAll(/WHEN\s+(.+?)\s+THEN\s+(.+?)(?=\s+WHEN\s|\s+ELSE\s|END|$)/gis)];
       if (whenMatches.length > 1) {
         const extras = whenMatches.slice(1).map(m => {
           const c = translateCondition(m[1].trim());
           const r = m[2].trim().replace(/^'|'$/g, '');
-          return `；如果 <span class="tl-clause">${c}</span>，那么这条记录就取值 <span class="tl-func">${r}</span>`;
+          return `；如果<span class="tl-clause">${c}</span>，那么这条记录就取值 <span class="tl-func">${r}</span>`;
         }).join('');
         narrative += extras;
       }
