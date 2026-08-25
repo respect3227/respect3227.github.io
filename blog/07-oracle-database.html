@@ -206,6 +206,19 @@ mark{background:#ffe9a8;color:inherit;border-radius:2px;padding:0 1px}
 .ar-summary{background:linear-gradient(135deg,#f0f6ff,#e8f0fe);border:1px solid #c2d7f5;border-radius:10px;padding:14px 16px;font-size:.85rem;line-height:1.7}
 .ar-summary strong{color:var(--blue)}
 
+.ar-translate{border:1px solid #c2d7f5;border-radius:10px;overflow:hidden;background:#fff}
+.ar-translate-head{background:linear-gradient(135deg,#1a73e8,#4285f4);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:8px;font-weight:600;font-size:.9rem}
+.ar-translate-body{padding:16px;line-height:1.9;font-size:.88rem;color:#333}
+.ar-translate-body .tl-sentence{margin-bottom:12px;padding-left:20px;position:relative}
+.ar-translate-body .tl-sentence::before{content:"";position:absolute;left:4px;top:10px;width:8px;height:8px;border-radius:50%;background:#1a73e8}
+.ar-translate-body .tl-sentence:last-child{margin-bottom:0}
+.ar-translate-body .tl-highlight{background:#fff8f6;padding:1px 5px;border-radius:3px;color:var(--oracle);font-weight:600}
+.ar-translate-body .tl-clause{color:#1a73e8;font-weight:700}
+.ar-translate-body .tl-func{color:#92400e;font-weight:700}
+.ar-translate-body .tl-note{display:block;margin-top:4px;padding:8px 12px;background:#f8f9fc;border-radius:6px;font-size:.8rem;color:#555;border-left:3px solid #1a73e8}
+.ar-translate-toggle{display:inline-flex;align-items:center;gap:4px;margin-left:8px;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:.78rem;cursor:pointer;padding:2px 10px;border-radius:10px}
+.ar-translate-toggle:hover{background:rgba(255,255,255,.3)}
+
 @media(max-width:600px){
   .analyzer-panel{margin:10px;max-height:92vh;border-radius:12px}
   .analyzer-body{padding:14px}
@@ -864,6 +877,7 @@ END;`
     const tokens = tokenizeSQL(sql);
     const upper = sql.toUpperCase();
     const result = {
+      sql: sql,
       statementType: 'UNKNOWN',
       statementDesc: '',
       complexity: 'low',
@@ -1078,6 +1092,191 @@ END;`
     return result;
   }
 
+  const CLAUSE_CN = {
+    'SELECT': '查询', 'FROM': '从', 'WHERE': '筛选条件', 'GROUP BY': '分组',
+    'HAVING': '分组筛选', 'ORDER BY': '排序', 'INSERT INTO': '插入到',
+    'UPDATE': '更新', 'DELETE FROM': '删除', 'SET': '设置', 'VALUES': '值',
+    'ON': '连接条件', 'USING': '使用', 'WHEN': '当', 'THEN': '则',
+    'ELSE': '否则', 'CASE': '条件判断', 'MERGE': '合并', 'INTO': '到',
+    'PARTITION BY': '分区', 'OVER': '开窗', 'RETURNING': '返回',
+    'FOR': '等待', 'WAIT': '等待', 'NOWAIT': '不等',
+    'START WITH': '起始条件', 'CONNECT BY': '连接条件', 'PRIOR': '上一级',
+    'WITH': '公用表', 'RECURSIVE': '递归', 'UNION': '并集',
+    'UNION ALL': '并集(包含重复)', 'INTERSECT': '交集', 'MINUS': '差集',
+    'CREATE': '创建', 'ALTER': '修改', 'DROP': '删除',
+    'TABLE': '表', 'INDEX': '索引', 'VIEW': '视图', 'SEQUENCE': '序列',
+    'TRIGGER': '触发器', 'PROCEDURE': '存储过程', 'FUNCTION': '函数',
+    'PACKAGE': '包', 'BODY': '包体', 'DECLARE': '声明',
+    'BEGIN': '开始', 'END': '结束', 'LOOP': '循环', 'WHILE': '当',
+    'IF': '如果', 'ELSIF': '或如果', 'RETURN': '返回',
+    'COMMIT': '提交', 'ROLLBACK': '回滚', 'SAVEPOINT': '保存点',
+    'GRANT': '授权', 'REVOKE': '撤销授权', 'TRUNCATE': '截断',
+    'CONSTRAINT': '约束', 'PRIMARY KEY': '主键', 'FOREIGN KEY': '外键',
+    'REFERENCES': '引用', 'DEFAULT': '默认值', 'CHECK': '检查',
+    'ADD': '添加', 'MODIFY': '修改列', 'COLUMN': '列',
+    'ASC': '升序', 'DESC': '降序', 'AND': '且', 'OR': '或',
+    'NOT': '非', 'IN': '在', 'LIKE': '匹配', 'BETWEEN': '介于',
+    'EXISTS': '存在', 'ANY': '任一', 'SOME': '一些', 'ALL': '全部',
+    'IS NULL': '为空', 'IS NOT NULL': '不为空', 'INNER JOIN': '内连接',
+    'LEFT JOIN': '左连接', 'RIGHT JOIN': '右连接', 'FULL JOIN': '全连接',
+    'CROSS JOIN': '交叉连接', 'NATURAL JOIN': '自然连接',
+    'LEFT OUTER JOIN': '左外连接', 'RIGHT OUTER JOIN': '右外连接',
+    'FULL OUTER JOIN': '全外连接'
+  };
+
+  const FUNC_CN = {
+    'NVL': '空值替换', 'NVL2': '条件空值替换', 'COALESCE': '首个非空值',
+    'DECODE': '条件解码', 'CASE': '条件表达式',
+    'UPPER': '转大写', 'LOWER': '转小写', 'INITCAP': '首字母大写',
+    'LENGTH': '字符串长度', 'SUBSTR': '截取子串', 'INSTR': '查找位置',
+    'CONCAT': '拼接字符串', 'REPLACE': '替换字符串', 'TRIM': '去除空格',
+    'LTRIM': '去除左空格', 'RTRIM': '去除右空格', 'LPAD': '左填充',
+    'RPAD': '右填充', 'ASCII': 'ASCII码', 'CHR': '字符',
+    'TRANSLATE': '字符翻译', 'REGEXP_LIKE': '正则匹配',
+    'REGEXP_REPLACE': '正则替换', 'REGEXP_SUBSTR': '正则截取',
+    'ROUND': '四舍五入', 'TRUNC': '截断', 'CEIL': '向上取整',
+    'FLOOR': '向下取整', 'MOD': '取模', 'ABS': '绝对值',
+    'SQRT': '平方根', 'POWER': '幂', 'LOG': '对数',
+    'TO_CHAR': '转字符', 'TO_DATE': '转日期', 'TO_NUMBER': '转数字',
+    'TO_TIMESTAMP': '转时间戳', 'CAST': '类型转换',
+    'SYSDATE': '系统日期', 'SYSTIMESTAMP': '系统时间戳',
+    'ADD_MONTHS': '加月份', 'MONTHS_BETWEEN': '月份差',
+    'NEXT_DAY': '下一天', 'LAST_DAY': '月末',
+    'TRUNC(date)': '截断日期', 'ROUND(date)': '四舍五入日期',
+    'EXTRACT': '提取日期部分', 'NEW_TIME': '时区转换',
+    'COUNT': '计数', 'SUM': '求和', 'AVG': '平均',
+    'MAX': '最大', 'MIN': '最小', 'STDDEV': '标准差',
+    'VARIANCE': '方差', 'LISTAGG': '列表聚合',
+    'RANK': '排名', 'DENSE_RANK': '密集排名', 'ROW_NUMBER': '行号',
+    'LEAD': '后一行', 'LAG': '前一行',
+    'FIRST_VALUE': '首个值', 'LAST_VALUE': '末个值',
+    'NTH_VALUE': '第N个值', 'NTILE': '分桶',
+    'PERCENT_RANK': '百分排名', 'CUME_DIST': '累积分布',
+    'RATIO_TO_REPORT': '比例报告',
+    'USER': '当前用户', 'SYS_CONTEXT': '系统上下文',
+    'ROWID': '行标识', 'ROWNUM': '行号', 'LEVEL': '层级',
+    'DBMS_OUTPUT': '输出包', 'DBMS_RANDOM': '随机包',
+    'DBMS_CRYPTO': '加密包', 'UTL_FILE': '文件包'
+  };
+
+  function translateSQL(sql, analysis) {
+    if (!sql || !sql.trim()) return null;
+
+    const upper = sql.toUpperCase();
+    const sentences = [];
+    const notes = [];
+
+    const construct = analysis.constructs;
+
+    let mainVerb = '';
+    switch (analysis.statementType) {
+      case 'SELECT': mainVerb = '查询'; break;
+      case 'INSERT': mainVerb = '插入'; break;
+      case 'UPDATE': mainVerb = '更新'; break;
+      case 'DELETE': mainVerb = '删除'; break;
+      case 'MERGE': mainVerb = '合并'; break;
+      case 'CREATE': mainVerb = '创建'; break;
+      case 'ALTER': mainVerb = '修改'; break;
+      case 'DROP': mainVerb = '删除'; break;
+      case 'TRUNCATE': mainVerb = '清空'; break;
+      case 'PL/SQL': mainVerb = '执行 PL/SQL 块'; break;
+      case 'SELECT (CTE)': mainVerb = '查询(含递归)'; break;
+      default: mainVerb = '执行'; break;
+    }
+
+    const tables = analysis.tables.length > 0 ? analysis.tables.join('、') : '相关表';
+
+    if (analysis.statementType === 'SELECT' || analysis.statementType === 'SELECT (CTE)') {
+      let selDesc = '';
+      if (analysis.functions.length > 0) {
+        const funcNames = analysis.functions.map(f => {
+          const cn = FUNC_CN[f.name.toUpperCase()] || f.category;
+          return f.name + '(' + cn + ')';
+        }).join('、');
+        selDesc = `<span class="tl-clause">${mainVerb}</span> ${tables}，使用了 <span class="tl-func">${funcNames}</span>`;
+      } else {
+        selDesc = `<span class="tl-clause">${mainVerb}</span> ${tables} 的数据`;
+      }
+
+      if (construct.hasJoin) {
+        selDesc += `，通过 <span class="tl-highlight">${construct.joinType}</span> 关联`;
+      }
+      if (construct.hasSubquery) {
+        selDesc += `，包含 <span class="tl-highlight">${construct.subqueryCount} 个子查询</span>`;
+      }
+      sentences.push(selDesc + '。');
+
+      if (construct.hasGroupBy) {
+        let grp = '按指定列分组';
+        if (construct.hasHaving) grp += '，并筛选出满足条件的分组';
+        sentences.push(`对结果<span class="tl-clause">分组</span>${construct.hasHaving ? '并筛选' : ''}。`);
+      }
+
+      if (construct.hasWindowFunc) {
+        sentences.push(`使用 <span class="tl-clause">窗口函数</span>进行排名和汇总计算。`);
+      }
+
+      if (construct.hasCTE) {
+        sentences.push(`包含 <span class="tl-clause">公用表表达式(CTE)</span>，支持递归查询。`);
+      }
+
+      if (construct.hasOrderBy) {
+        sentences.push(`结果按指定列<span class="tl-clause">排序</span>输出。`);
+      }
+
+      if (construct.hasUnion) {
+        sentences.push(`使用 <span class="tl-clause">集合运算</span>合并多个查询结果。`);
+      }
+
+      if (construct.hasCase) {
+        sentences.push(`包含 <span class="tl-clause">CASE WHEN</span> 条件表达式进行逻辑判断。`);
+      }
+    } else if (analysis.statementType === 'INSERT') {
+      sentences.push(`<span class="tl-clause">向</span> ${tables} <span class="tl-clause">插入</span>新数据行。`);
+    } else if (analysis.statementType === 'UPDATE') {
+      sentences.push(`<span class="tl-clause">更新</span> ${tables} 中符合条件的行数据。`);
+    } else if (analysis.statementType === 'DELETE') {
+      sentences.push(`<span class="tl-clause">删除</span> ${tables} 中符合条件的行。`);
+    } else if (analysis.statementType === 'MERGE') {
+      sentences.push(`<span class="tl-clause">合并</span>数据：匹配到的行执行更新，未匹配的执行插入。`);
+    } else if (['CREATE','ALTER','DROP','TRUNCATE'].includes(analysis.statementType)) {
+      const objMatch = upper.match(/(CREATE|ALTER|DROP|TRUNCATE)\s+(TABLE|INDEX|VIEW|SEQUENCE|TRIGGER|PROCEDURE|FUNCTION|PACKAGE)/i);
+      const objType = objMatch ? objMatch[2].toUpperCase() : 'OBJECT';
+      const objCN = CLAUSE_CN[objType] || objType;
+      sentences.push(`<span class="tl-clause">${mainVerb}</span> ${objCN} 对象。`);
+    } else if (analysis.statementType === 'PL/SQL') {
+      sentences.push(`<span class="tl-clause">执行 PL/SQL</span> 过程化代码块，包含变量声明和逻辑处理。`);
+      if (construct.hasPLSQL) {
+        notes.push('PL/SQL 块支持：变量声明、游标、循环、条件判断、异常处理');
+      }
+    }
+
+    if (analysis.functions.length > 0) {
+      analysis.functions.slice(0, 5).forEach(f => {
+        const cn = FUNC_CN[f.name.toUpperCase()];
+        if (cn) {
+          notes.push(`<span class="tl-func">${f.name}</span>：${cn}，${f.desc}`);
+        }
+      });
+    }
+
+    if (construct.hasWindowFunc) {
+      notes.push('窗口函数语法：函数名() OVER (PARTITION BY 分区 ORDER BY 排序)，用于排名和分组汇总');
+    }
+    if (construct.hasCTE) {
+      notes.push('CTE 语法：WITH 名称 AS (查询)，可多次引用，递归查询需加 RECURSIVE');
+    }
+    if (construct.hasMerge) {
+      notes.push('MERGE 语法：MERGE INTO 目标 USING 源 ON 条件 WHEN MATCHED THEN UPDATE WHEN NOT MATCHED THEN INSERT');
+    }
+
+    if (sentences.length === 0) {
+      sentences.push(`<span class="tl-clause">执行</span> ${analysis.statementType} 类型的 SQL 语句。`);
+    }
+
+    return { sentences, notes };
+  }
+
   function renderAnalyzerResult(result) {
     const box = $('#analyzerResult');
     box.classList.add('show');
@@ -1175,7 +1374,22 @@ END;`
         </div>
       </div>`;
 
-    box.innerHTML = stmtHtml + funcHtml + structHtml + tokenHtml + warningHtml + summaryHtml;
+    const trans = translateSQL(result.sql, result);
+    const translateHtml = trans ? `
+      <div class="ar-section">
+        <div class="ar-translate">
+          <div class="ar-translate-head">
+            <i class="fas fa-language"></i> 中文翻译解读
+            <button class="ar-translate-toggle" onclick="this.closest('.ar-translate').querySelector('.ar-translate-body').style.display=this.closest('.ar-translate').querySelector('.ar-translate-body').style.display==='none'?'block':'none';this.innerHTML=this.innerHTML.includes('展开')?'收起 ▲':'展开 ▼'">收起 ▲</button>
+          </div>
+          <div class="ar-translate-body">
+            ${trans.sentences.map(s => `<div class="tl-sentence">${s}</div>`).join('')}
+            ${trans.notes.length > 0 ? trans.notes.map(n => `<div class="tl-note">${n}</div>`).join('') : ''}
+          </div>
+        </div>
+      </div>` : '';
+
+    box.innerHTML = stmtHtml + funcHtml + structHtml + tokenHtml + warningHtml + translateHtml + summaryHtml;
 
     box.querySelectorAll('.func-jump').forEach(link => {
       link.addEventListener('click', () => {
