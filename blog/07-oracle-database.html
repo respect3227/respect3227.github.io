@@ -15,15 +15,17 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
 <style>
 :root{
-  --oracle:#C74634; --oracle-dark:#a33; --blue:#1a73e8;
-  --bg:#f4f6f9; --card:#fff; --border:#e3e8ef;
-  --text:#1a1a2e; --text-2:#555; --text-3:#8a93a3;
-  --code-bg:#2d2d2d; --shadow:0 2px 12px rgba(20,30,60,.06);
-  --shadow-hover:0 8px 28px rgba(20,30,60,.12);
-  --radius:10px;
-}
+      --oracle:#C74634; --oracle-dark:#a33; --blue:#1a73e8;
+      --bg:#f4f6f9; --card:#fff; --border:#e3e8ef;
+      --text:#1a1a2e; --text-2:#555; --text-3:#8a93a3;
+      --code-bg:#2d2d2d; --shadow:0 2px 12px rgba(20,30,60,.06);
+      --shadow-hover:0 8px 28px rgba(20,30,60,.12);
+      --radius:10px;
+      --zoom:1;
+    }
 *{box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.7;margin:0;-webkit-font-smoothing:antialiased}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.7;margin:0;-webkit-font-smoothing:antialiased;transition:zoom .2s ease}
+body{zoom:1}
 
 /* ===== 顶部导航 ===== */
 .topbar{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
@@ -40,7 +42,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
 .topbar-actions{display:flex;gap:8px;margin-left:auto}
 .icon-btn{width:38px;height:38px;border-radius:50%;border:none;background:var(--bg);color:var(--text-2);cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;font-size:.95rem}
 .icon-btn:hover{background:var(--oracle);color:#fff}
-@media(max-width:760px){.brand small{display:none}.search-global{display:none}}
+.zoom-group{display:flex;align-items:center;background:var(--bg);border-radius:20px;padding:2px;gap:1px}
+.zoom-btn{width:30px;height:30px;border-radius:50%;border:none;background:transparent;color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;font-size:.85rem}
+.zoom-btn:hover{background:var(--oracle);color:#fff}
+.zoom-label{font-size:.72rem;color:var(--text-3);padding:0 4px;min-width:36px;text-align:center;font-variant-numeric:tabular-nums}
+.zoom-divider{width:1px;height:16px;background:var(--border)}
+@media(max-width:760px){.brand small{display:none}.search-global{display:none}.zoom-label{display:none}}
 
 /* ===== Hero ===== */
 .hero{max-width:1320px;margin:0 auto;padding:42px 24px 26px}
@@ -268,6 +275,18 @@ mark{background:#ffe9a8;color:inherit;border-radius:2px;padding:0 1px}
       <input id="globalSearch" type="search" placeholder="搜索语法或函数，如 MERGE / NVL / 分区..." autocomplete="off">
     </div>
     <div class="topbar-actions">
+      <div class="zoom-group" id="zoomGroup" title="页面缩放">
+        <button class="zoom-btn" id="zoomOut" title="缩小 (Ctrl+-)">
+          <i class="fas fa-minus"></i>
+        </button>
+        <span class="zoom-label" id="zoomLabel">100%</span>
+        <button class="zoom-btn" id="zoomIn" title="放大 (Ctrl++)">
+          <i class="fas fa-plus"></i>
+        </button>
+        <button class="zoom-btn" id="zoomReset" title="重置 (Ctrl+0)">
+          <i class="fas fa-expand"></i>
+        </button>
+      </div>
       <button class="icon-btn" id="goFunc" title="跳转函数库"><i class="fas fa-function"></i></button>
       <button class="icon-btn" id="goTop" title="返回顶部"><i class="fas fa-arrow-up"></i></button>
     </div>
@@ -656,6 +675,52 @@ if ('serviceWorker' in navigator) {
   $('#menuToggle').addEventListener('click', ()=>{
     document.getElementById('sidebar').classList.toggle('open');
   });
+
+  /* ---------- 页面缩放 ---------- */
+  const ZOOM_LEVELS = [80, 90, 100, 110, 120, 130, 150];
+  let zoomIdx = 2;
+  const zoomLabel = $('#zoomLabel');
+  const zoomInBtn = $('#zoomIn');
+  const zoomOutBtn = $('#zoomOut');
+  const zoomResetBtn = $('#zoomReset');
+
+  function applyZoom() {
+    const level = ZOOM_LEVELS[zoomIdx];
+    zoomLabel.textContent = level + '%';
+    zoomInBtn.style.opacity = zoomIdx >= ZOOM_LEVELS.length - 1 ? '.4' : '1';
+    zoomOutBtn.style.opacity = zoomIdx <= 0 ? '.4' : '1';
+    zoomResetBtn.style.opacity = zoomIdx === 2 ? '.4' : '1';
+    const ratio = level / 100;
+    const body = document.body;
+    body.style.zoom = ratio;
+    try { localStorage.setItem('oracle_zoom', String(level)); } catch(e) {}
+  }
+
+  zoomInBtn.addEventListener('click', ()=>{
+    if (zoomIdx < ZOOM_LEVELS.length - 1) { zoomIdx++; applyZoom(); }
+  });
+  zoomOutBtn.addEventListener('click', ()=>{
+    if (zoomIdx > 0) { zoomIdx--; applyZoom(); }
+  });
+  zoomResetBtn.addEventListener('click', ()=>{ zoomIdx = 2; applyZoom(); });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === '=' || e.key === '+') { e.preventDefault(); if (zoomIdx < ZOOM_LEVELS.length-1){zoomIdx++;applyZoom();} }
+      else if (e.key === '-') { e.preventDefault(); if (zoomIdx > 0){zoomIdx--;applyZoom();} }
+      else if (e.key === '0') { e.preventDefault(); zoomIdx = 2; applyZoom(); }
+    }
+  });
+
+  try {
+    const saved = localStorage.getItem('oracle_zoom');
+    if (saved) {
+      const val = parseInt(saved);
+      const idx = ZOOM_LEVELS.indexOf(val);
+      if (idx >= 0) zoomIdx = idx;
+    }
+  } catch(e) {}
+  applyZoom();
 
   /* ---------- 初始渲染：首屏代码高亮 ---------- */
   const firstBatch = main.querySelectorAll('pre');
