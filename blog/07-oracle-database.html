@@ -131,6 +131,86 @@ pre[class*="language-"] code{font-family:"SFMono-Regular",Consolas,"Liberation M
 .no-result i{font-size:2rem;display:block;margin-bottom:10px;color:#d0d6e0}
 mark{background:#ffe9a8;color:inherit;border-radius:2px;padding:0 1px}
 
+/* ===== SQL 代码分析器 ===== */
+.analyzer-fab{position:fixed;right:24px;bottom:80px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#1a73e8,#4285f4);color:#fff;border:none;cursor:pointer;box-shadow:0 6px 20px rgba(26,115,232,.4);z-index:80;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:.2s}
+.analyzer-fab:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(26,115,232,.5)}
+.analyzer-fab .badge{position:absolute;top:-4px;right:-4px;background:#C74634;color:#fff;font-size:.65rem;padding:2px 6px;border-radius:8px;font-weight:700}
+
+.analyzer-modal{position:fixed;inset:0;background:rgba(20,30,60,.5);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.analyzer-modal.open{display:flex}
+.analyzer-panel{background:#fff;border-radius:14px;width:100%;max-width:720px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden}
+.analyzer-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
+.analyzer-head h3{margin:0;font-size:1.05rem;display:flex;align-items:center;gap:10px}
+.analyzer-head h3 i{color:var(--blue)}
+.analyzer-close{background:none;border:none;font-size:1.2rem;color:var(--text-3);cursor:pointer;padding:4px 8px;border-radius:6px}
+.analyzer-close:hover{background:#f0f2f7;color:var(--text)}
+.analyzer-body{padding:20px;overflow-y:auto;flex:1}
+.analyzer-input-wrap{position:relative;margin-bottom:14px}
+.analyzer-input-wrap textarea{width:100%;min-height:140px;border:1.5px solid var(--border);border-radius:10px;padding:14px;font-family:"SFMono-Regular",Consolas,monospace;font-size:.85rem;line-height:1.6;resize:vertical;outline:none;background:#1e1e2e;color:#e0e0e0}
+.analyzer-input-wrap textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,115,232,.15)}
+.analyzer-input-wrap .run-btn{position:absolute;bottom:12px;right:12px;background:var(--blue);color:#fff;border:none;padding:8px 18px;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:.2s}
+.analyzer-input-wrap .run-btn:hover{background:#1557b0}
+.analyzer-input-wrap .run-btn:disabled{opacity:.6;cursor:not-allowed}
+.analyzer-sample{margin-bottom:14px}
+.analyzer-sample summary{cursor:pointer;color:var(--text-3);font-size:.82rem;display:flex;align-items:center;gap:6px;user-select:none}
+.analyzer-sample summary:hover{color:var(--blue)}
+.analyzer-sample .sample-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.analyzer-sample .sample-btn{padding:4px 12px;border:1px solid var(--border);border-radius:14px;background:#f8f9fc;color:var(--text-2);font-size:.78rem;cursor:pointer;transition:.15s}
+.analyzer-sample .sample-btn:hover{border-color:var(--blue);color:var(--blue)}
+
+.analyzer-result{display:none}
+.analyzer-result.show{display:block}
+.ar-section{margin-bottom:18px}
+.ar-section h4{font-size:.85rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin:0 0 10px;display:flex;align-items:center;gap:6px}
+.ar-section h4 i{color:var(--blue)}
+
+.ar-statement{background:linear-gradient(135deg,#f0f6ff,#e8f0fe);border:1px solid #c2d7f5;border-radius:10px;padding:14px 16px}
+.ar-statement .stmt-type{font-size:1.1rem;font-weight:800;color:var(--blue);margin-bottom:4px}
+.ar-statement .stmt-desc{font-size:.85rem;color:var(--text-2);line-height:1.6}
+.ar-statement .stmt-complexity{display:inline-flex;align-items:center;gap:4px;margin-top:8px;padding:3px 10px;border-radius:12px;font-size:.75rem;font-weight:600}
+.ar-statement .stmt-complexity.low{background:#dcfce7;color:#15803d}
+.ar-statement .stmt-complexity.medium{background:#fef3c7;color:#b45309}
+.ar-statement .stmt-complexity.high{background:#fee2e2;color:#b91c1c}
+
+.ar-tokens{display:flex;flex-wrap:wrap;gap:6px}
+.ar-token{padding:5px 12px;border-radius:6px;font-size:.8rem;font-family:"SFMono-Regular",Consolas,monospace;font-weight:500;cursor:help;transition:.15s;border:1px solid transparent}
+.ar-token:hover{transform:translateY(-1px)}
+.ar-token.tk-keyword{background:#eef2ff;color:#3730a3;border-color:#c7d2fe}
+.ar-token.tk-function{background:#fef3c7;color:#92400e;border-color:#fde68a}
+.ar-token.tk-operator{background:#fdf2f8;color:#9d174d;border-color:#fbcfe8}
+.ar-token.tk-clause{background:#e0f2fe;color:#075985;border-color:#bae6fd}
+.ar-token.tk-join{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+.ar-token.tk-object{background:#f3e8ff;color:#6b21a8;border-color:#e9d5ff}
+.ar-token.tk-literal{background:#f0fdf4;color:#166534;border-color:#bbf7d0}
+
+.ar-functions{display:flex;flex-direction:column;gap:8px}
+.ar-func-item{display:flex;align-items:center;justify-content:space-between;background:#fff8f6;border:1px solid #fde8e4;border-radius:8px;padding:8px 12px;font-size:.85rem}
+.ar-func-item .func-name{font-family:"SFMono-Regular",Consolas,monospace;font-weight:700;color:var(--oracle)}
+.ar-func-item .func-cat{font-size:.72rem;color:var(--text-3)}
+.ar-func-item .func-jump{font-size:.75rem;color:var(--blue);cursor:pointer;text-decoration:none;margin-left:auto}
+.ar-func-item .func-jump:hover{text-decoration:underline}
+
+.ar-structure{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.ar-struct-item{background:#f8f9fc;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:.82rem;display:flex;align-items:center;gap:8px}
+.ar-struct-item .dot{width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0}
+.ar-struct-item.highlighted{background:#fff8f6;border-color:#fde8e4}
+.ar-struct-item.highlighted .dot{background:var(--oracle)}
+
+.ar-warnings{display:flex;flex-direction:column;gap:8px}
+.ar-warning{display:flex;gap:10px;padding:10px 14px;border-radius:8px;font-size:.82rem;line-height:1.5}
+.ar-warning.warn{background:#fef3c7;color:#92400e;border-left:3px solid #f59e0b}
+.ar-warning.error{background:#fee2e2;color:#991b1b;border-left:3px solid #ef4444}
+.ar-warning.info{background:#dbeafe;color:#1e40af;border-left:3px solid #3b82f6}
+.ar-warning i{flex-shrink:0;margin-top:2px}
+
+.ar-summary{background:linear-gradient(135deg,#f0f6ff,#e8f0fe);border:1px solid #c2d7f5;border-radius:10px;padding:14px 16px;font-size:.85rem;line-height:1.7}
+.ar-summary strong{color:var(--blue)}
+
+@media(max-width:600px){
+  .analyzer-panel{margin:10px;max-height:92vh;border-radius:12px}
+  .analyzer-body{padding:14px}
+}
+
 /* 回到顶部 */
 .to-top{position:fixed;right:24px;bottom:24px;width:46px;height:46px;border-radius:50%;background:var(--oracle);color:#fff;border:none;cursor:pointer;box-shadow:0 6px 20px rgba(199,70,52,.4);opacity:0;visibility:hidden;transition:.25s;z-index:80;font-size:1rem}
 .to-top.show{opacity:1;visibility:visible}
@@ -180,6 +260,44 @@ mark{background:#ffe9a8;color:inherit;border-radius:2px;padding:0 1px}
     </div>
   </div>
 </nav>
+
+<!-- SQL 代码分析器入口 -->
+<button class="analyzer-fab" id="analyzerFab" title="分析 SQL 代码">
+  <i class="fas fa-code"></i>
+  <span class="badge">新</span>
+</button>
+
+<!-- SQL 代码分析器面板 -->
+<div class="analyzer-modal" id="analyzerModal">
+  <div class="analyzer-panel">
+    <div class="analyzer-head">
+      <h3><i class="fas fa-code"></i> SQL 代码智能分析器</h3>
+      <button class="analyzer-close" id="analyzerClose"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="analyzer-body">
+      <div class="analyzer-input-wrap">
+        <textarea id="analyzerInput" placeholder="在此粘贴你的 SQL 代码，例如：&#10;SELECT e.ename, d.dname, COUNT(*)&#10;FROM emp e JOIN dept d ON e.deptno = d.deptno&#10;WHERE e.sal > 1000&#10;GROUP BY e.ename, d.dname&#10;HAVING COUNT(*) > 1&#10;ORDER BY COUNT(*) DESC;" spellcheck="false"></textarea>
+        <button class="run-btn" id="analyzerRun"><i class="fas fa-play"></i> 分析</button>
+      </div>
+      <div class="analyzer-sample">
+        <details>
+          <summary><i class="fas fa-lightbulb"></i> 示例代码（点击加载）</summary>
+          <div class="sample-list">
+            <button class="sample-btn" data-sample="select">SELECT 查询</button>
+            <button class="sample-btn" data-sample="join">多表 JOIN</button>
+            <button class="sample-btn" data-sample="agg">分组聚合</button>
+            <button class="sample-btn" data-sample="sub">子查询</button>
+            <button class="sample-btn" data-sample="analytic">分析函数</button>
+            <button class="sample-btn" data-sample="ddl">DDL 建表</button>
+            <button class="sample-btn" data-sample="merge">MERGE 合并</button>
+            <button class="sample-btn" data-sample="plsql">PL/SQL</button>
+          </div>
+        </details>
+      </div>
+      <div class="analyzer-result" id="analyzerResult"></div>
+    </div>
+  </div>
+</div>
 
 <!-- Hero -->
 <header class="hero">
@@ -529,6 +647,615 @@ if ('serviceWorker' in navigator) {
   /* ---------- 初始渲染：首屏代码高亮 ---------- */
   const firstBatch = main.querySelectorAll('pre');
   firstBatch.forEach(pre=>codeObserver.observe(pre));
+
+  /* ======================================================== */
+  /* ===== SQL 代码智能分析器 ===== */
+  /* ======================================================== */
+
+  const SQL_KEYWORDS = new Set([
+    'SELECT','FROM','WHERE','GROUP','BY','HAVING','ORDER','INSERT','INTO','VALUES',
+    'UPDATE','SET','DELETE','CREATE','TABLE','ALTER','DROP','INDEX','VIEW','SEQUENCE',
+    'SYNONYM','TRIGGER','PROCEDURE','FUNCTION','PACKAGE','BODY','DECLARE','BEGIN','END',
+    'IF','THEN','ELSE','ELSIF','LOOP','WHILE','FOR','RETURN','CURSOR','OPEN','CLOSE',
+    'FETCH','NEXT','IN','OUT','INOUT','IS','AS','AND','OR','NOT','NULL','LIKE','BETWEEN',
+    'EXISTS','INNER','LEFT','RIGHT','FULL','OUTER','CROSS','NATURAL','JOIN','ON','USING',
+    'UNION','ALL','INTERSECT','MINUS','CONNECT','START','WITH','RECURSIVE','MERGE',
+    'MATCHED','NOTHING','WHEN','THEN','ELSE','CASE','ROW','NOWAIT','WITH','READ',
+    'ONLY','CONSTRAINT','PRIMARY','FOREIGN','REFERENCES','UNIQUE','CHECK','DEFAULT',
+    'CASCADE','RESTRICT','NO','ACTION','ADD','MODIFY','COLUMN','RENAME','TO','TRUNCATE',
+    'COMMIT','ROLLBACK','SAVEPOINT','GRANT','REVOKE','DBA','RESOURCE','CONNECT','SESSION',
+    'ALTER','SYSTEM','AUDIT','NOAUDIT','COMPUTE','LABEL','MINUS','SHARE','EXCLUSIVE',
+    'MODE','NONE','CHANGE','TO','VARCHAR2','NUMBER','DATE','CHAR','CLOB','BLOB','RAW',
+    'LONG','TIMESTAMP','INTERVAL','YEAR','MONTH','DAY','HOUR','MINUTE','SECOND',
+    'WITH','TIME','ZONE','LOCAL','AT','OPERATOR','OF','ON','AS','IN','ANY','SOME',
+    'NEW','OLD','WHICH','WHO','WHOM','THIS','THAT','THESE','THOSE'
+  ]);
+
+  const SQL_CLAUSES = new Set([
+    'SELECT','FROM','WHERE','GROUP BY','HAVING','ORDER BY','INSERT INTO','UPDATE',
+    'DELETE FROM','SET','VALUES','ON','USING','WHEN','THEN','ELSE','CASE','MERGE',
+    'PARTITION','RETURNING','FOR','WAIT','NOWAIT','START WITH','CONNECT BY','PRIOR',
+    'WITH','RECURSIVE','UNION','UNION ALL','INTERSECT','MINUS'
+  ]);
+
+  const SQL_JOINS = new Set([
+    'INNER JOIN','LEFT JOIN','RIGHT JOIN','FULL JOIN','FULL OUTER JOIN',
+    'CROSS JOIN','NATURAL JOIN','LEFT OUTER JOIN','RIGHT OUTER JOIN'
+  ]);
+
+  const SQL_OPERATORS = new Set([
+    '=','<>','!=','<','>','<=','>=','+','-','*','/','%',
+    'AND','OR','NOT','IS','IN','LIKE','BETWEEN','EXISTS','ANY','SOME','ALL',
+    '||','::','.'
+  ]);
+
+  const SQL_OBJECTS = new Set([
+    'TABLE','VIEW','INDEX','SEQUENCE','SYNONYM','PROCEDURE','FUNCTION',
+    'PACKAGE','TRIGGER','TYPE','LIBRARY','DIRECTORY','CONTEXT'
+  ]);
+
+  const SQL_LITERALS = new Set([
+    'SYSDATE','USER','SYSTEM','ROWNUM','LEVEL','NEXTVAL','CURRVAL',
+    'TRUE','FALSE','UNKNOWN'
+  ]);
+
+  const SAMPLES = {
+    select: `SELECT e.ename, e.sal, d.dname
+FROM emp e, dept d
+WHERE e.deptno = d.deptno
+  AND e.sal > 1500
+ORDER BY e.sal DESC`,
+    join: `SELECT e.ename, d.dname, s.grade
+FROM emp e
+INNER JOIN dept d ON e.deptno = d.deptno
+LEFT JOIN salgrade s ON e.sal BETWEEN s.losal AND s.hisal
+WHERE d.loc LIKE '%NEW%'`,
+    agg: `SELECT d.dname, COUNT(*) AS emp_cnt,
+       AVG(e.sal) AS avg_sal,
+       MAX(e.sal) AS max_sal
+FROM dept d
+JOIN emp e ON d.deptno = e.deptno
+GROUP BY d.dname, d.loc
+HAVING AVG(e.sal) > 2000
+ORDER BY avg_sal DESC`,
+    sub: `SELECT ename, sal
+FROM emp
+WHERE sal > (SELECT AVG(sal) FROM emp WHERE deptno = 30)
+  AND deptno IN (SELECT deptno FROM dept WHERE loc = 'DALLAS')`,
+    analytic: `SELECT ename, deptno, sal,
+  RANK() OVER (PARTITION BY deptno ORDER BY sal DESC) AS rank_in_dept,
+  SUM(sal) OVER (PARTITION BY deptno) AS dept_total,
+  ROUND(AVG(sal) OVER (), 2) AS overall_avg
+FROM emp
+ORDER BY deptno, sal DESC`,
+    ddl: `CREATE TABLE employees (
+  emp_id    NUMBER(6)   PRIMARY KEY,
+  emp_name  VARCHAR2(50) NOT NULL,
+  email     VARCHAR2(100) UNIQUE,
+  hire_date DATE        DEFAULT SYSDATE,
+  salary    NUMBER(8,2)  DEFAULT 0,
+  dept_id   NUMBER(4)    REFERENCES departments(dept_id),
+  status    VARCHAR2(20) DEFAULT 'ACTIVE'
+);
+CREATE INDEX idx_emp_name ON employees(emp_name);`,
+    merge: `MERGE INTO target t
+USING source s
+ON (t.id = s.id)
+WHEN MATCHED THEN
+  UPDATE SET t.name = s.name, t.updated = SYSDATE
+WHEN NOT MATCHED THEN
+  INSERT (id, name, created)
+  VALUES (s.id, s.name, SYSDATE);`,
+    plsql: `DECLARE
+  v_count NUMBER;
+  v_name  VARCHAR2(50);
+BEGIN
+  SELECT COUNT(*) INTO v_count FROM emp WHERE deptno = 10;
+  DBMS_OUTPUT.PUT_LINE('Department 10 has ' || v_count || ' employees');
+
+  FOR r IN (SELECT ename, sal FROM emp WHERE sal > 3000) LOOP
+    DBMS_OUTPUT.PUT_LINE(r.ename || ' earns ' || r.sal);
+  END LOOP;
+END;`
+  };
+
+  function tokenizeSQL(sql) {
+    const tokens = [];
+    const upper = sql.toUpperCase();
+    const len = sql.length;
+    let i = 0;
+
+    while (i < len) {
+      const ch = sql[i];
+
+      if (/\s/.test(ch)) { i++; continue; }
+
+      if (ch === '-' && sql[i+1] === '-') {
+        while (i < len && sql[i] !== '\n') i++;
+        continue;
+      }
+
+      if (ch === '/' && sql[i+1] === '*') {
+        i += 2;
+        while (i < len && !(sql[i] === '*' && sql[i+1] === '/')) i++;
+        i += 2;
+        continue;
+      }
+
+      if (ch === "'") {
+        let j = i + 1;
+        while (j < len && sql[j] !== "'") {
+          if (sql[j] === '\'') j++;
+          j++;
+        }
+        const val = sql.slice(i, j+1);
+        tokens.push({text: val, type: 'literal', raw: sql.slice(i, j+1)});
+        i = j + 1;
+        continue;
+      }
+
+      if (ch === '"') {
+        let j = i + 1;
+        while (j < len && sql[j] !== '"') j++;
+        const val = sql.slice(i, j+1);
+        tokens.push({text: val, type: 'identifier', raw: sql.slice(i, j+1)});
+        i = j + 1;
+        continue;
+      }
+
+      if (/\d/.test(ch)) {
+        let j = i;
+        while (j < len && /[\d.]/.test(sql[j])) j++;
+        const val = sql.slice(i, j);
+        tokens.push({text: val, type: 'number', raw: val});
+        i = j;
+        continue;
+      }
+
+      if (/[a-zA-Z_]/.test(ch)) {
+        let j = i;
+        while (j < len && /[a-zA-Z0-9_]/.test(sql[j])) j++;
+        const word = sql.slice(i, j);
+        const wordUpper = word.toUpperCase();
+
+        if (SQL_KEYWORDS.has(wordUpper)) {
+          tokens.push({text: wordUpper, type: 'keyword', raw: word});
+        } else if (SQL_OBJECTS.has(wordUpper)) {
+          tokens.push({text: wordUpper, type: 'object', raw: word});
+        } else if (SQL_LITERALS.has(wordUpper)) {
+          tokens.push({text: wordUpper, type: 'literal', raw: word});
+        } else {
+          tokens.push({text: word, type: 'identifier', raw: word});
+        }
+        i = j;
+        continue;
+      }
+
+      if (/[(),;.]/.test(ch)) {
+        tokens.push({text: ch, type: 'punctuation', raw: ch});
+        i++;
+        continue;
+      }
+
+      if (/[<>=!+\-*/%|]/.test(ch)) {
+        let j = i;
+        while (j < len && /[<>=!+\-*/%|]/.test(sql[j])) j++;
+        const op = sql.slice(i, j);
+        const opUpper = op.toUpperCase();
+        if (SQL_OPERATORS.has(opUpper) || SQL_OPERATORS.has(op)) {
+          tokens.push({text: op, type: 'operator', raw: op});
+        } else {
+          tokens.push({text: op, type: 'operator', raw: op});
+        }
+        i = j;
+        continue;
+      }
+
+      tokens.push({text: ch, type: 'unknown', raw: ch});
+      i++;
+    }
+
+    return tokens;
+  }
+
+  function analyzeSQL(sql) {
+    if (!sql || !sql.trim()) return null;
+
+    const tokens = tokenizeSQL(sql);
+    const upper = sql.toUpperCase();
+    const result = {
+      statementType: 'UNKNOWN',
+      statementDesc: '',
+      complexity: 'low',
+      complexityScore: 0,
+      tokens: tokens,
+      functions: [],
+      constructs: {
+        hasJoin: false, joinType: '',
+        hasSubquery: false, subqueryCount: 0,
+        hasGroupBy: false, hasHaving: false,
+        hasOrderBy: false,
+        hasUnion: false,
+        hasCase: false,
+        hasWindowFunc: false,
+        hasWithClause: false,
+        hasMerge: false,
+        hasPLSQL: false,
+        hasCTE: false,
+        hasWindowSpec: false
+      },
+      tables: [],
+      warnings: [],
+      keywords: []
+    };
+
+    const firstKW = tokens.find(t => t.type === 'keyword');
+    if (firstKW) {
+      const kw = firstKW.text;
+      const STMT_MAP = {
+        'SELECT':  {type: 'SELECT', desc: '查询语句，从一个或多个表中检索数据', complexity: 'low'},
+        'INSERT':  {type: 'INSERT', desc: '插入语句，向表中添加新行', complexity: 'low'},
+        'UPDATE':  {type: 'UPDATE', desc: '更新语句，修改表中已有行的数据', complexity: 'low'},
+        'DELETE':  {type: 'DELETE', desc: '删除语句，从表中删除行', complexity: 'low'},
+        'MERGE':   {type: 'MERGE', desc: '合并语句，根据条件进行 INSERT/UPDATE/DELETE', complexity: 'medium'},
+        'CREATE':  {type: 'CREATE', desc: 'DDL 语句，创建数据库对象', complexity: 'low'},
+        'ALTER':   {type: 'ALTER', desc: 'DDL 语句，修改数据库对象结构', complexity: 'low'},
+        'DROP':    {type: 'DROP', desc: 'DDL 语句，删除数据库对象', complexity: 'low'},
+        'TRUNCATE':{type: 'TRUNCATE', desc: 'DDL 语句，快速清空表数据', complexity: 'low'},
+        'DECLARE': {type: 'PL/SQL', desc: 'PL/SQL 块，声明变量和游标', complexity: 'high'},
+        'BEGIN':   {type: 'PL/SQL', desc: 'PL/SQL 块，过程化逻辑处理', complexity: 'high'},
+        'WITH':    {type: 'SELECT (CTE)', desc: '公用表表达式(CTE)，递归查询或模块化查询', complexity: 'medium'},
+        'GRANT':   {type: 'GRANT', desc: 'DCL 语句，授予权限', complexity: 'low'},
+        'REVOKE':  {type: 'REVOKE', desc: 'DCL 语句，撤销权限', complexity: 'low'},
+        'COMMIT':  {type: 'COMMIT', desc: 'TCL 语句，提交事务', complexity: 'low'},
+        'ROLLBACK':{type: 'ROLLBACK', desc: 'TCL 语句，回滚事务', complexity: 'low'}
+      };
+      const mapped = STMT_MAP[kw];
+      if (mapped) {
+        result.statementType = mapped.type;
+        result.statementDesc = mapped.desc;
+        result.complexity = mapped.complexity;
+      } else {
+        result.statementDesc = `以 ${kw} 开头的 SQL 语句`;
+      }
+    }
+
+    const FUNC_PATTERN = /\b([A-Z][A-Z0-9_]{2,})\s*\(/g;
+    const foundFuncs = new Set();
+    let fm;
+    while ((fm = FUNC_PATTERN.exec(upper)) !== null) {
+      const fname = fm[1];
+      if (!SQL_KEYWORDS.has(fname) && !SQL_OBJECTS.has(fname)) {
+        foundFuncs.add(fname);
+      }
+    }
+
+    funcList.forEach(c => {
+      c.items.forEach(f => {
+        if (foundFuncs.has(f.name.toUpperCase())) {
+          result.functions.push({
+            name: f.name,
+            category: c.category,
+            desc: f.desc,
+            syntax: f.syntax
+          });
+        }
+      });
+    });
+
+    foundFuncs.forEach(fname => {
+      const known = result.functions.some(f => f.name.toUpperCase() === fname);
+      if (!known) {
+        const cat = fname.endsWith('_DATE') || fname.includes('DATE') ? '日期函数 Date'
+          : fname.includes('NUM') || fname.includes('ROUND') || fname.includes('TRUNC') ? '数值函数 Numeric'
+          : fname.includes('TO_') ? '转换函数 Conversion'
+          : fname === 'NVL' || fname === 'COALESCE' ? 'NULL 处理函数 Null'
+          : '其他/环境函数 Misc';
+        result.functions.push({
+          name: fname,
+          category: cat,
+          desc: '内置函数',
+          syntax: fname + '()'
+        });
+      }
+    });
+
+    if (/INNER\s+JOIN|LEFT\s+(OUTER\s+)?JOIN|RIGHT\s+(OUTER\s+)?JOIN|FULL\s+(OUTER\s+)?JOIN|CROSS\s+JOIN|NATURAL\s+JOIN/i.test(upper)) {
+      result.constructs.hasJoin = true;
+      if (/INNER\s+JOIN/i.test(upper)) result.constructs.joinType = 'INNER JOIN';
+      else if (/LEFT\s+(OUTER\s+)?JOIN/i.test(upper)) result.constructs.joinType = 'LEFT JOIN';
+      else if (/RIGHT\s+(OUTER\s+)?JOIN/i.test(upper)) result.constructs.joinType = 'RIGHT JOIN';
+      else if (/FULL\s+(OUTER\s+)?JOIN/i.test(upper)) result.constructs.joinType = 'FULL OUTER JOIN';
+      else if (/CROSS\s+JOIN/i.test(upper)) result.constructs.joinType = 'CROSS JOIN';
+      else if (/NATURAL\s+JOIN/i.test(upper)) result.constructs.joinType = 'NATURAL JOIN';
+      result.complexityScore += 10;
+    } else if (/,/g.test(sql) && /FROM\s+\w+\s*,\s*\w+/i.test(upper)) {
+      result.constructs.hasJoin = true;
+      result.constructs.joinType = '隐式连接（逗号连接）';
+      result.warnings.push({type: 'warn', msg: '使用了隐式连接（逗号），建议改为显式 JOIN 语法以提高可读性'});
+      result.complexityScore += 5;
+    }
+
+    const subqueryMatches = upper.match(/\(\s*SELECT\s/g);
+    if (subqueryMatches) {
+      result.constructs.hasSubquery = true;
+      result.constructs.subqueryCount = subqueryMatches.length;
+      result.complexityScore += subqueryMatches.length * 8;
+      if (subqueryMatches.length > 2) {
+        result.warnings.push({type: 'warn', msg: '子查询较多（'+subqueryMatches.length+'个），考虑改用 JOIN 或 CTE 优化可读性'});
+      }
+    }
+
+    if (/GROUP\s+BY/i.test(upper)) {
+      result.constructs.hasGroupBy = true;
+      result.complexityScore += 5;
+    }
+    if (/HAVING/i.test(upper)) {
+      result.constructs.hasHaving = true;
+      result.complexityScore += 5;
+    }
+    if (/ORDER\s+BY/i.test(upper)) {
+      result.constructs.hasOrderBy = true;
+    }
+    if (/UNION(\s+ALL)?/i.test(upper)) {
+      result.constructs.hasUnion = true;
+      result.complexityScore += 8;
+    }
+    if (/CASE\s+WHEN/i.test(upper)) {
+      result.constructs.hasCase = true;
+      result.complexityScore += 5;
+    }
+    if (/OVER\s*\(/i.test(upper)) {
+      result.constructs.hasWindowFunc = true;
+      result.constructs.hasWindowSpec = true;
+      result.complexityScore += 12;
+      const overCount = (upper.match(/OVER\s*\(/g) || []).length;
+      if (overCount > 3) {
+        result.warnings.push({type: 'warn', msg: '窗口函数较多（'+overCount+'个），注意性能影响'});
+      }
+    }
+    if (/WITH\s+\w+\s+AS\s*\(/i.test(upper)) {
+      result.constructs.hasWithClause = true;
+      result.constructs.hasCTE = true;
+      result.complexityScore += 8;
+    }
+    if (/MERGE\s+INTO/i.test(upper)) {
+      result.constructs.hasMerge = true;
+      result.complexityScore += 10;
+    }
+    if (/DECLARE|BEGIN|END|LOOP|WHILE|FOR\s+\w+\s+IN/i.test(upper)) {
+      result.constructs.hasPLSQL = true;
+      result.complexityScore += 15;
+    }
+
+    const FROM_match = upper.match(/FROM\s+([A-Z0-9_,\s]+?)(?:WHERE|GROUP|ORDER|HAVING|CONNECT|START|UNION|INTERSECT|MINUS|MERGE|WHEN|RETURNING|$)/i);
+    if (FROM_match) {
+      const tableStr = FROM_match[1].trim();
+      result.tables = tableStr.split(/[,\s]+/).filter(t => t && !SQL_KEYWORDS.has(t.toUpperCase()));
+    }
+    const INTO_match = upper.match(/INTO\s+([A-Z0-9_,\s]+?)(?:\(|VALUES|SELECT|$)/i);
+    if (INTO_match) {
+      const tableStr = INTO_match[1].trim();
+      const tbls = tableStr.split(/[,\s]+/).filter(t => t && !SQL_KEYWORDS.has(t.toUpperCase()));
+      result.tables = result.tables.concat(tbls);
+    }
+    const UPDATE_match = upper.match(/UPDATE\s+([A-Z0-9_]+)/i);
+    if (UPDATE_match) {
+      result.tables.push(UPDATE_match[1]);
+    }
+    const DELETE_match = upper.match(/DELETE\s+FROM\s+([A-Z0-9_]+)/i);
+    if (DELETE_match) {
+      result.tables.push(DELETE_match[1]);
+    }
+    result.tables = [...new Set(result.tables.map(t => t.toUpperCase()))];
+
+    if (/SELECT\s+\*/i.test(upper) && !/COUNT\s*\(\s*\*\s*\)/i.test(upper)) {
+      result.warnings.push({type: 'info', msg: '使用了 SELECT *，生产环境中建议明确指定列名以避免不必要的数据传输'});
+    }
+    if (/WHERE\s+1\s*=\s*1/i.test(upper)) {
+      result.warnings.push({type: 'info', msg: 'WHERE 1=1 是常见的动态 SQL 拼接技巧，注意 SQL 注入风险'});
+    }
+    if (/NOT\s+IN\s*\(\s*SELECT/i.test(upper)) {
+      result.warnings.push({type: 'warn', msg: 'NOT IN 子查询在子查询返回 NULL 时结果可能不符合预期，建议改用 NOT EXISTS'});
+    }
+    if (/LIKE\s+['%_]/i.test(upper) && /['%_].*['%_]/.test(sql)) {
+      result.warnings.push({type: 'warn', msg: '双通配符模糊查询（如 %xxx%）无法使用索引，大数据量下性能较差'});
+    }
+    if (/OR\s+\w+\s*=\s*\w+\s+OR\s+\w+/.test(upper)) {
+      result.warnings.push({type: 'warn', msg: '多个 OR 条件可能导致索引失效，考虑改写为 IN 或 UNION'});
+    }
+    if (/ROUND\s*\(\s*SYSDATE|TRUNC\s*\(\s*SYSDATE|TO_CHAR\s*\(\s*SYSDATE/i.test(upper)) {
+      result.warnings.push({type: 'info', msg: '对 SYSDATE 使用函数可能导致索引失效，考虑使用范围条件'});
+    }
+
+    if (result.complexityScore >= 30) result.complexity = 'high';
+    else if (result.complexityScore >= 15) result.complexity = 'medium';
+
+    result.complexityScore += tokens.length;
+
+    result.keywords = tokens.filter(t => t.type === 'keyword').map(t => t.text);
+
+    return result;
+  }
+
+  function renderAnalyzerResult(result) {
+    const box = $('#analyzerResult');
+    box.classList.add('show');
+
+    if (!result) {
+      box.innerHTML = '<div class="no-result" style="grid-column:1/-1"><i class="fas fa-exclamation-circle"></i>请输入 SQL 代码后再分析</div>';
+      return;
+    }
+
+    const cLabel = result.complexity === 'high' ? '高复杂度' : result.complexity === 'medium' ? '中复杂度' : '低复杂度';
+    const cClass = result.complexity;
+    const cIcon = result.complexity === 'high' ? 'fa-fire' : result.complexity === 'medium' ? 'fa-triangle-exclamation' : 'fa-circle-check';
+
+    const stmtHtml = `
+      <div class="ar-section">
+        <h4><i class="fas fa-file-alt"></i> 语句类型</h4>
+        <div class="ar-statement">
+          <div class="stmt-type">${result.statementType}</div>
+          <div class="stmt-desc">${result.statementDesc}</div>
+          <span class="stmt-complexity ${cClass}"><i class="fas ${cIcon}"></i> ${cLabel}</span>
+        </div>
+      </div>`;
+
+    const funcHtml = result.functions.length > 0 ? `
+      <div class="ar-section">
+        <h4><i class="fas fa-function"></i> 识别到的 Oracle 函数 <span style="font-weight:400;color:#8a93a3;font-size:.78rem">(${result.functions.length}个)</span></h4>
+        <div class="ar-functions">
+          ${result.functions.map(f => `
+            <div class="ar-func-item">
+              <span><span class="func-name">${f.name}</span> <span class="func-cat">· ${f.category}</span></span>
+              <a class="func-jump" data-func="${f.name}"><i class="fas fa-arrow-right"></i> 查看文档</a>
+            </div>
+          `).join('')}
+        </div>
+      </div>` : '';
+
+    const constructs = result.constructs;
+    const structureItems = [];
+    if (constructs.hasJoin) structureItems.push({label: constructs.joinType + ' 连接', highlighted: true});
+    if (constructs.hasSubquery) structureItems.push({label: '子查询 × ' + constructs.subqueryCount, highlighted: constructs.subqueryCount > 1});
+    if (constructs.hasGroupBy) structureItems.push({label: 'GROUP BY 分组', highlighted: true});
+    if (constructs.hasHaving) structureItems.push({label: 'HAVING 过滤', highlighted: true});
+    if (constructs.hasOrderBy) structureItems.push({label: 'ORDER BY 排序', highlighted: false});
+    if (constructs.hasUnion) structureItems.push({label: '集合运算 (UNION)', highlighted: true});
+    if (constructs.hasCase) structureItems.push({label: 'CASE WHEN 条件表达式', highlighted: false});
+    if (constructs.hasWindowFunc) structureItems.push({label: '窗口函数 (OVER)', highlighted: true});
+    if (constructs.hasCTE) structureItems.push({label: 'CTE 公用表表达式', highlighted: true});
+    if (constructs.hasMerge) structureItems.push({label: 'MERGE 合并语句', highlighted: true});
+    if (constructs.hasPLSQL) structureItems.push({label: 'PL/SQL 过程化逻辑', highlighted: true});
+    if (result.tables.length > 0) structureItems.push({label: '涉及表: ' + result.tables.join(', '), highlighted: false});
+
+    const structHtml = structureItems.length > 0 ? `
+      <div class="ar-section">
+        <h4><i class="fas fa-sitemap"></i> 语法结构识别</h4>
+        <div class="ar-structure">
+          ${structureItems.map(s => `<div class="ar-struct-item ${s.highlighted ? 'highlighted' : ''}"><span class="dot"></span>${s.label}</div>`).join('')}
+        </div>
+      </div>` : '';
+
+    const tokenHtml = `
+      <div class="ar-section">
+        <h4><i class="fas fa-tags"></i> 词法分析 <span style="font-weight:400;color:#8a93a3;font-size:.78rem">(${result.tokens.length}个 token)</span></h4>
+        <div class="ar-tokens">
+          ${result.tokens.map(t => {
+            const cls = {keyword:'tk-keyword', function:'tk-function', operator:'tk-operator', clause:'tk-clause', join:'tk-join', object:'tk-object', literal:'tk-literal', identifier:'tk-object', number:'tk-literal', punctuation:'', unknown:''}[t.type] || '';
+            return `<span class="ar-token ${cls}" title="${t.type}">${t.raw}</span>`;
+          }).join('')}
+        </div>
+      </div>`;
+
+    const warningHtml = result.warnings.length > 0 ? `
+      <div class="ar-section">
+        <h4><i class="fas fa-triangle-exclamation"></i> 优化建议 <span style="font-weight:400;color:#8a93a3;font-size:.78rem">(${result.warnings.length}条)</span></h4>
+        <div class="ar-warnings">
+          ${result.warnings.map(w => `
+            <div class="ar-warning ${w.type}">
+              <i class="fas ${w.type === 'error' ? 'fa-circle-xmark' : w.type === 'warn' ? 'fa-triangle-exclamation' : 'fa-circle-info'}"></i>
+              <span>${w.msg}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>` : '';
+
+    const summaryItems = [];
+    summaryItems.push(`<strong>复杂度评估：</strong>${cLabel}（基于语句类型、连接数、子查询数、窗口函数数等综合计算）`);
+    if (result.tables.length > 0) summaryItems.push(`<strong>涉及表：</strong>${result.tables.join(', ')}`);
+    if (result.functions.length > 0) summaryItems.push(`<strong>使用函数：</strong>${result.functions.map(f=>f.name).join(', ')}`);
+    if (result.keywords.length > 0) summaryItems.push(`<strong>关键语法：</strong>${[...new Set(result.keywords)].slice(0,15).join(' → ')}`);
+
+    const summaryHtml = `
+      <div class="ar-section">
+        <h4><i class="fas fa-lightbulb"></i> 分析摘要</h4>
+        <div class="ar-summary">
+          ${summaryItems.map(s => `<div>${s}</div>`).join('')}
+        </div>
+      </div>`;
+
+    box.innerHTML = stmtHtml + funcHtml + structHtml + tokenHtml + warningHtml + summaryHtml;
+
+    box.querySelectorAll('.func-jump').forEach(link => {
+      link.addEventListener('click', () => {
+        const fname = link.dataset.func;
+        fsInput.value = fname;
+        kw = fname;
+        fsWrap.classList.add('has-text');
+        const fnHit = allFuncs.find(f => f.name.toUpperCase() === fname.toUpperCase());
+        if (fnHit) {
+          activeCat = fnHit.category;
+          catsWrap.querySelectorAll('.cat-btn').forEach(x => x.classList.toggle('active', x.dataset.cat === activeCat));
+        }
+        renderFunc(true);
+        document.getElementById('analyzerModal').classList.remove('open');
+        document.getElementById('sec-functions').scrollIntoView({behavior: 'smooth', block: 'start'});
+        setTimeout(() => {
+          const cards = document.querySelectorAll('.func-card');
+          cards.forEach(c => {
+            if (c.querySelector('.fname')?.textContent.toUpperCase().includes(fname.toUpperCase())) {
+              c.style.transition = 'box-shadow .4s';
+              c.style.boxShadow = '0 0 0 3px rgba(199,70,52,.5)';
+              setTimeout(() => { c.style.boxShadow = ''; }, 1800);
+            }
+          });
+        }, 400);
+      });
+    });
+  }
+
+  const fab = $('#analyzerFab');
+  const modal = $('#analyzerModal');
+  const closeBtn = $('#analyzerClose');
+  const runBtn = $('#analyzerRun');
+  const input = $('#analyzerInput');
+  const result = $('#analyzerResult');
+
+  fab.addEventListener('click', () => {
+    modal.classList.add('open');
+    input.focus();
+  });
+
+  closeBtn.addEventListener('click', () => modal.classList.remove('open'));
+  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && modal.classList.contains('open')) modal.classList.remove('open');
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && modal.classList.contains('open')) {
+      e.preventDefault();
+      runBtn.click();
+    }
+  });
+
+  runBtn.addEventListener('click', () => {
+    const sql = input.value.trim();
+    if (!sql) return;
+    runBtn.disabled = true;
+    runBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 分析中...';
+    setTimeout(() => {
+      const res = analyzeSQL(sql);
+      renderAnalyzerResult(res);
+      runBtn.disabled = false;
+      runBtn.innerHTML = '<i class="fas fa-play"></i> 分析';
+    }, 100);
+  });
+
+  input.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      runBtn.click();
+    }
+  });
+
+  document.querySelectorAll('.sample-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.sample;
+      if (SAMPLES[key]) {
+        input.value = SAMPLES[key];
+        runBtn.click();
+      }
+    });
+  });
 })();
 </script>
 </body>
