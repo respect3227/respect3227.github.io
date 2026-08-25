@@ -1224,119 +1224,389 @@ END;`
     'DBMS_CRYPTO': '加密包', 'UTL_FILE': '文件包'
   };
 
+  const FUNC_DESC = {
+    'NVL': '如果第一个参数为空则返回第二个参数',
+    'NVL2': '如果第一个参数非空返回第二个，否则返回第三个',
+    'COALESCE': '返回参数列表中第一个非空的值',
+    'INSTR': '在字符串中查找子串的位置，>0表示包含',
+    'INSTRB': '按字节查找子串位置',
+    'SUBSTR': '从指定位置截取指定长度的子串',
+    'SUBSTRB': '按字节截取子串',
+    'REPLACE': '将字符串中的指定子串替换为新内容',
+    'REGEXP_LIKE': '使用正则表达式匹配字符串',
+    'REGEXP_REPLACE': '使用正则表达式替换匹配内容',
+    'REGEXP_SUBSTR': '使用正则表达式截取匹配内容',
+    'UPPER': '将字符串转为大写',
+    'LOWER': '将字符串转为小写',
+    'INITCAP': '将每个单词首字母转为大写',
+    'LENGTH': '返回字符串长度',
+    'TRIM': '去除字符串首尾空格',
+    'LTRIM': '去除字符串左侧空格',
+    'RTRIM': '去除字符串右侧空格',
+    'LPAD': '在字符串左侧填充指定字符到指定长度',
+    'RPAD': '在字符串右侧填充指定字符到指定长度',
+    'ROUND': '对数值进行四舍五入',
+    'TRUNC': '对数值进行截断',
+    'CEIL': '向上取整',
+    'FLOOR': '向下取整',
+    'MOD': '取模运算',
+    'ABS': '取绝对值',
+    'TO_CHAR': '将数值或日期转为字符串',
+    'TO_DATE': '将字符串转为日期',
+    'TO_NUMBER': '将字符串转为数值',
+    'CAST': '强制类型转换',
+    'COUNT': '统计行数或非空值数量',
+    'SUM': '对数值求和',
+    'AVG': '计算平均值',
+    'MAX': '取最大值',
+    'MIN': '取最小值',
+    'LISTAGG': '将多行值拼接成一个字符串',
+    'RANK': '排名函数（有并列）',
+    'DENSE_RANK': '密集排名（无并列空缺）',
+    'ROW_NUMBER': '为每行分配序号',
+    'OVER': '窗口函数的标志',
+    'PARTITION': '分区',
+    'SYSDATE': '当前系统日期和时间',
+    'SYSTIMESTAMP': '当前系统时间戳',
+    'ADD_MONTHS': '在日期上加月份',
+    'MONTHS_BETWEEN': '计算两个日期的月份差',
+    'NEXT_DAY': '返回指定日期的下一个星期',
+    'LAST_DAY': '返回指定日期所在月的最后一天'
+  };
+
+  const OP_CN = {
+    '=': '等于', '!=': '不等于', '<>': '不等于',
+    '>': '大于', '<': '小于', '>=': '大于等于', '<=': '小于等于',
+    'LIKE': '匹配', 'NOT LIKE': '不匹配',
+    'IN': '属于', 'NOT IN': '不属于',
+    'BETWEEN': '介于', 'IS NULL': '是空的', 'IS NOT NULL': '不是空的',
+    'EXISTS': '存在', 'NOT EXISTS': '不存在',
+    '>=': '大于或等于'
+  };
+
+  function describeSearchStr(s) {
+    if (s.length === 1) {
+      if (/[A-Z]/.test(s)) return `大写字母 ${s}`;
+      if (/[a-z]/.test(s)) return `小写字母 ${s}`;
+      return `字符 ${s}`;
+    }
+    return `"${s}"`;
+  }
+
+  function translateCondition(expr, fieldName) {
+    if (!expr) return '';
+    let e = expr.trim();
+
+    const orParts = splitByKeyword(e, '\\bOR\\b');
+    if (orParts.length > 1) {
+      return orParts.map(p => translateCondition(p.trim(), fieldName)).join('，或者');
+    }
+
+    const andParts = splitByKeyword(e, '\\bAND\\b');
+    if (andParts.length > 1) {
+      return andParts.map(p => translateCondition(p.trim(), fieldName)).join('，并且');
+    }
+
+    const instrMatch = e.match(/INSTR\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*'([^']*)'\s*\)\s*([<>]=?|!=)\s*(\d+)/i);
+    if (instrMatch) {
+      const col = instrMatch[1].toUpperCase();
+      const search = instrMatch[2];
+      const op = instrMatch[3];
+      const val = parseInt(instrMatch[4]);
+      const contains = op === '>' && val === 0;
+      const desc = describeSearchStr(search);
+      return contains
+        ? `字段 ${col} 里面包含${desc}`
+        : `字段 ${col} 里面不包含${desc}`;
+    }
+
+    const instrAnyMatch = e.match(/INSTR\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*'([^']*)'\s*\)/i);
+    if (instrAnyMatch) {
+      const col = instrAnyMatch[1].toUpperCase();
+      const desc = describeSearchStr(instrAnyMatch[2]);
+      return `字段 ${col} 中查找${desc}的位置`;
+    }
+
+    const likeMatch = e.match(/([A-Za-z_][A-Za-z0-9_]*)\s+LIKE\s+'%([^%]*?)%'/i);
+    if (likeMatch) {
+      return `字段 ${likeMatch[1].toUpperCase()} 里面包含"${likeMatch[2]}"`;
+    }
+
+    const likeStartMatch = e.match(/([A-Za-z_][A-Za-z0-9_]*)\s+LIKE\s+'([^%]*)%'/i);
+    if (likeStartMatch && !likeStartMatch[2].includes('%')) {
+      return `字段 ${likeStartMatch[1].toUpperCase()} 以"${likeStartMatch[2]}"开头`;
+    }
+
+    const likeEndMatch = e.match(/([A-Za-z_][A-Za-z0-9_]*)\s+LIKE\s+'%([^%]*)'/i);
+    if (likeEndMatch && !likeEndMatch[2].includes('%')) {
+      return `字段 ${likeEndMatch[1].toUpperCase()} 以"${likeEndMatch[2]}"结尾`;
+    }
+
+    const regexLikeMatch = e.match(/REGEXP_LIKE\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*'([^']*)'\s*\)/i);
+    if (regexLikeMatch) {
+      return `字段 ${regexLikeMatch[1].toUpperCase()} 匹配正则表达式"${regexLikeMatch[2]}"`;
+    }
+
+    const betweenMatch = e.match(/([A-Za-z_][A-Za-z0-9_]*)\s+BETWEEN\s+(\S+)\s+AND\s+(\S+)/i);
+    if (betweenMatch) {
+      return `字段 ${betweenMatch[1].toUpperCase()} 介于 ${betweenMatch[2]} 和 ${betweenMatch[3]} 之间`;
+    }
+
+    const inMatch = e.match(/([A-Za-z_][A-Za-z0-9_]*)\s+IN\s*\(([^)]+)\)/i);
+    if (inMatch) {
+      return `字段 ${inMatch[1].toUpperCase()} 属于 (${inMatch[2].trim()})`;
+    }
+
+    const notInMatch = e.match(/([A-Za-z_][A-Za-z0-9_]*)\s+NOT\s+IN\s*\(([^)]+)\)/i);
+    if (notInMatch) {
+      return `字段 ${notInMatch[1].toUpperCase()} 不属于 (${notInMatch[2].trim()})`;
+    }
+
+    const isNullMatch = e.match(/([A-Za-z_][A-Za-z0-9_]*)\s+IS\s+NULL/i);
+    if (isNullMatch) {
+      return `字段 ${isNullMatch[1].toUpperCase()} 是空的`;
+    }
+
+    const isNotNullMatch = e.match(/([A-Za-z_][A-Za-z0-9_]*)\s+IS\s+NOT\s+NULL/i);
+    if (isNotNullMatch) {
+      return `字段 ${isNotNullMatch[1].toUpperCase()} 不是空的`;
+    }
+
+    const compareMatch = e.match(/([A-Za-z_][A-Za-z0-9_]*)\s*([=!<>]+)\s*(.+)/i);
+    if (compareMatch) {
+      const col = compareMatch[1].toUpperCase();
+      const op = compareMatch[2];
+      const val = compareMatch[3].trim().replace(/^'|'$/g, '');
+      const opCN = OP_CN[op] || op;
+      return `字段 ${col} ${opCN} ${val}`;
+    }
+
+    const funcMatch = e.match(/^([A-Z_]+)\s*\(/i);
+    if (funcMatch) {
+      const fn = funcMatch[1];
+      const desc = FUNC_DESC[fn];
+      if (desc) {
+        return `${fn}()：${desc}`;
+      }
+    }
+
+    if (fieldName) {
+      const colMatch = e.match(/^([a-zA-Z_][a-zA-Z0-9_]*)(\.[a-zA-Z_][a-zA-Z0-9_]*)?\s*$/i);
+      if (colMatch) return `字段 ${colMatch[1].toUpperCase()}${colMatch[2]||''}`;
+    }
+
+    e = e.replace(/\bIS\s+NOT\s+NULL\b/gi, '不是空的');
+    e = e.replace(/\bIS\s+NULL\b/gi, '是空的');
+    e = e.replace(/\bNOT\s+IN\b/gi, '不属于');
+    e = e.replace(/\bNOT\s+LIKE\b/gi, '不匹配');
+    e = e.replace(/\bNOT\s+EXISTS\b/gi, '不存在');
+    e = e.replace(/\bEXISTS\b/gi, '存在');
+    e = e.replace(/\bBETWEEN\b/gi, '介于');
+    e = e.replace(/\bLIKE\b/gi, '匹配');
+    e = e.replace(/\bIN\s*\(/gi, '属于 (');
+    e = e.replace(/\bIN\b/gi, '属于');
+    e = e.replace(/\bAND\b/gi, '并且');
+    e = e.replace(/\bOR\b/gi, '或者');
+    e = e.replace(/\bNOT\b/gi, '不是');
+    e = e.replace(/!=/g, '不等于');
+    e = e.replace(/<>/g, '不等于');
+    e = e.replace(/>=/g, '大于或等于');
+    e = e.replace(/<=/g, '小于或等于');
+    e = e.replace(/=/g, '等于');
+    e = e.replace(/>/g, '大于');
+    e = e.replace(/</g, '小于');
+
+    return e;
+  }
+
+  function splitByKeyword(str, keywordPattern) {
+    const regex = new RegExp(`(${keywordPattern})`, 'gi');
+    const parts = str.split(regex);
+    const result = [];
+    for (let i = 0; i < parts.length; i++) {
+      if (parts[i] && parts[i].trim()) {
+        if (/^(AND|OR)$/i.test(parts[i].trim())) {
+          result.push(parts[i].trim().toUpperCase());
+        } else {
+          result.push(parts[i]);
+        }
+      }
+    }
+    if (result.length >= 3) {
+      const combined = [];
+      combined.push(result[0]);
+      for (let i = 1; i < result.length; i += 2) {
+        const kw = result[i];
+        const val = result[i + 1] || '';
+        combined.push(kw + ' ' + val);
+      }
+      return combined;
+    }
+    return [str];
+  }
+
   function translateSQL(sql, analysis) {
     if (!sql || !sql.trim()) return null;
 
-    const upper = sql.toUpperCase();
     const sentences = [];
     const notes = [];
-
+    const rawSql = sql.trim();
+    const upper = rawSql.toUpperCase();
     const construct = analysis.constructs;
 
-    let mainVerb = '';
-    switch (analysis.statementType) {
-      case 'SELECT': mainVerb = '查询'; break;
-      case 'INSERT': mainVerb = '插入'; break;
-      case 'UPDATE': mainVerb = '更新'; break;
-      case 'DELETE': mainVerb = '删除'; break;
-      case 'MERGE': mainVerb = '合并'; break;
-      case 'CREATE': mainVerb = '创建'; break;
-      case 'ALTER': mainVerb = '修改'; break;
-      case 'DROP': mainVerb = '删除'; break;
-      case 'TRUNCATE': mainVerb = '清空'; break;
-      case 'PL/SQL': mainVerb = '执行 PL/SQL 块'; break;
-      case 'SELECT (CTE)': mainVerb = '查询(含递归)'; break;
-      default: mainVerb = '执行'; break;
-    }
+    let narrative = '';
 
-    const tables = analysis.tables.length > 0 ? analysis.tables.join('、') : '相关表';
+    const whenMatch = rawSql.match(/WHEN\s+(.+?)\s+THEN\s+(.+?)(?=\s+WHEN\s|\s+ELSE\s|END|$)/is);
+    const caseMatch = rawSql.match(/CASE\s+WHEN\s+(.+?)\s+THEN\s+(.+?)(?=\s+WHEN\s|\s+ELSE\s|END|$)/is);
+    const elseMatch = rawSql.match(/ELSE\s+(.+?)\s+END\s*/is);
+
+    if (whenMatch) {
+      const condRaw = whenMatch[1].trim();
+      const resultRaw = whenMatch[2].trim();
+
+      const condTrans = translateCondition(condRaw);
+      const resultTrans = resultRaw.replace(/^'|'$/g, '');
+
+      narrative += `如果 <span class="tl-clause">${condTrans}</span>，那么这条记录就取值 <span class="tl-func">${resultTrans}</span>`;
+
+      const whenMatches = [...rawSql.matchAll(/WHEN\s+(.+?)\s+THEN\s+(.+?)(?=\s+WHEN\s|\s+ELSE\s|END|$)/gis)];
+      if (whenMatches.length > 1) {
+        const extras = whenMatches.slice(1).map(m => {
+          const c = translateCondition(m[1].trim());
+          const r = m[2].trim().replace(/^'|'$/g, '');
+          return `；如果 <span class="tl-clause">${c}</span>，那么这条记录就取值 <span class="tl-func">${r}</span>`;
+        }).join('');
+        narrative += extras;
+      }
+
+      if (elseMatch) {
+        const elseVal = elseMatch[1].trim().replace(/^'|'$/g, '');
+        narrative += `；其他情况，这条记录就取值 <span class="tl-func">${elseVal}</span>`;
+      }
+
+      narrative += '。';
+      sentences.push(narrative);
+    }
 
     if (analysis.statementType === 'SELECT' || analysis.statementType === 'SELECT (CTE)') {
-      let selDesc = '';
-      if (analysis.functions.length > 0) {
-        const funcNames = analysis.functions.map(f => {
-          const cn = FUNC_CN[f.name.toUpperCase()] || f.category;
-          return f.name + '(' + cn + ')';
-        }).join('、');
-        selDesc = `<span class="tl-clause">${mainVerb}</span> ${tables}，使用了 <span class="tl-func">${funcNames}</span>`;
-      } else {
-        selDesc = `<span class="tl-clause">${mainVerb}</span> ${tables} 的数据`;
-      }
+      if (!whenMatch) {
+        const parts = [];
+        const fromMatch = rawSql.match(/FROM\s+([\w.]+)/i);
+        const whereMatch = rawSql.match(/WHERE\s+(.+?)(?=\s+GROUP\s+BY|\s+HAVING|\s+ORDER\s+BY|\s+CONNECT|$)/is);
+        const groupMatch = rawSql.match(/GROUP\s+BY\s+(.+?)(?=\s+HAVING|\s+ORDER\s+BY|\s+CONNECT|$)/is);
+        const havingMatch = rawSql.match(/HAVING\s+(.+?)(?=\s+ORDER\s+BY|\s+CONNECT|$)/is);
+        const orderMatch = rawSql.match(/ORDER\s+BY\s+(.+?)$/is);
+        const colsMatch = rawSql.match(/SELECT\s+(DISTINCT\s+)?(.+?)\s+FROM\s/i);
 
-      if (construct.hasJoin) {
-        selDesc += `，通过 <span class="tl-highlight">${construct.joinType}</span> 关联`;
-      }
-      if (construct.hasSubquery) {
-        selDesc += `，包含 <span class="tl-highlight">${construct.subqueryCount} 个子查询</span>`;
-      }
-      sentences.push(selDesc + '。');
+        const tableName = fromMatch ? fromMatch[1].toUpperCase() : '相关表';
+        parts.push(`从 <span class="tl-clause">${tableName}</span> 表查询数据`);
 
-      if (construct.hasGroupBy) {
-        let grp = '按指定列分组';
-        if (construct.hasHaving) grp += '，并筛选出满足条件的分组';
-        sentences.push(`对结果<span class="tl-clause">分组</span>${construct.hasHaving ? '并筛选' : ''}。`);
-      }
+        if (colsMatch && colsMatch[2]) {
+          let cols = colsMatch[2].trim();
+          if (cols.length > 60) cols = cols.slice(0, 60) + '...';
+          if (construct.hasWindowFunc) {
+            parts.push(`涉及 <span class="tl-func">窗口函数</span> 计算`);
+          }
+          if (construct.hasCase) {
+            parts.push(`使用 <span class="tl-func">CASE WHEN</span> 条件判断`);
+          }
+        }
 
-      if (construct.hasWindowFunc) {
-        sentences.push(`使用 <span class="tl-clause">窗口函数</span>进行排名和汇总计算。`);
-      }
+        if (whereMatch) {
+          const whereCond = translateCondition(whereMatch[1].trim());
+          parts.push(`筛选条件：<span class="tl-clause">${whereCond}</span>`);
+        }
 
-      if (construct.hasCTE) {
-        sentences.push(`包含 <span class="tl-clause">公用表表达式(CTE)</span>，支持递归查询。`);
-      }
+        if (construct.hasJoin) {
+          parts.push(`通过 <span class="tl-clause">${construct.joinType}</span> 连接`);
+        }
 
-      if (construct.hasOrderBy) {
-        sentences.push(`结果按指定列<span class="tl-clause">排序</span>输出。`);
-      }
+        if (groupMatch) {
+          parts.push(`按 <span class="tl-clause">${groupMatch[1].trim()}</span> 分组`);
+        }
 
-      if (construct.hasUnion) {
-        sentences.push(`使用 <span class="tl-clause">集合运算</span>合并多个查询结果。`);
-      }
+        if (havingMatch) {
+          const havingCond = translateCondition(havingMatch[1].trim());
+          parts.push(`分组筛选：<span class="tl-clause">${havingCond}</span>`);
+        }
 
-      if (construct.hasCase) {
-        sentences.push(`包含 <span class="tl-clause">CASE WHEN</span> 条件表达式进行逻辑判断。`);
+        if (orderMatch) {
+          parts.push(`按 <span class="tl-clause">${orderMatch[1].trim()}</span> 排序`);
+        }
+
+        if (parts.length > 0) {
+          sentences.push(parts.join('，') + '。');
+        }
       }
     } else if (analysis.statementType === 'INSERT') {
-      sentences.push(`<span class="tl-clause">向</span> ${tables} <span class="tl-clause">插入</span>新数据行。`);
+      const intoMatch = rawSql.match(/INTO\s+([\w.]+)/i);
+      if (intoMatch) {
+        sentences.push(`<span class="tl-clause">向</span> <span class="tl-func">${intoMatch[1].toUpperCase()}</span> 表插入一行新数据。`);
+      }
     } else if (analysis.statementType === 'UPDATE') {
-      sentences.push(`<span class="tl-clause">更新</span> ${tables} 中符合条件的行数据。`);
+      const tableMatch = rawSql.match(/UPDATE\s+([\w.]+)/i);
+      const whereMatch = rawSql.match(/WHERE\s+(.+?)$/is);
+      if (tableMatch) {
+        let s = `更新 <span class="tl-func">${tableMatch[1].toUpperCase()}</span> 表中的数据`;
+        if (whereMatch) {
+          const cond = translateCondition(whereMatch[1].trim());
+          s += `，条件：<span class="tl-clause">${cond}</span>`;
+        }
+        s += '。';
+        sentences.push(s);
+      }
     } else if (analysis.statementType === 'DELETE') {
-      sentences.push(`<span class="tl-clause">删除</span> ${tables} 中符合条件的行。`);
+      const tableMatch = rawSql.match(/FROM\s+([\w.]+)/i) || rawSql.match(/DELETE\s+FROM\s+([\w.]+)/i);
+      const whereMatch = rawSql.match(/WHERE\s+(.+?)$/is);
+      if (tableMatch) {
+        let s = `从 <span class="tl-func">${tableMatch[1].toUpperCase()}</span> 表删除数据`;
+        if (whereMatch) {
+          const cond = translateCondition(whereMatch[1].trim());
+          s += `，条件：<span class="tl-clause">${cond}</span>`;
+        }
+        s += '。';
+        sentences.push(s);
+      }
     } else if (analysis.statementType === 'MERGE') {
-      sentences.push(`<span class="tl-clause">合并</span>数据：匹配到的行执行更新，未匹配的执行插入。`);
+      sentences.push(`<span class="tl-clause">合并</span>操作：匹配到时更新，未匹配到时插入。`);
     } else if (['CREATE','ALTER','DROP','TRUNCATE'].includes(analysis.statementType)) {
       const objMatch = upper.match(/(CREATE|ALTER|DROP|TRUNCATE)\s+(TABLE|INDEX|VIEW|SEQUENCE|TRIGGER|PROCEDURE|FUNCTION|PACKAGE)/i);
-      const objType = objMatch ? objMatch[2].toUpperCase() : 'OBJECT';
-      const objCN = CLAUSE_CN[objType] || objType;
-      sentences.push(`<span class="tl-clause">${mainVerb}</span> ${objCN} 对象。`);
-    } else if (analysis.statementType === 'PL/SQL') {
-      sentences.push(`<span class="tl-clause">执行 PL/SQL</span> 过程化代码块，包含变量声明和逻辑处理。`);
-      if (construct.hasPLSQL) {
-        notes.push('PL/SQL 块支持：变量声明、游标、循环、条件判断、异常处理');
+      if (objMatch) {
+        const objCN = CLAUSE_CN[objMatch[2]] || objMatch[2];
+        sentences.push(`<span class="tl-clause">${analysis.statementType}</span> 一个 ${objCN} 对象。`);
       }
+    } else if (analysis.statementType === 'PL/SQL') {
+      sentences.push(`这是一段 <span class="tl-clause">PL/SQL</span> 过程化代码块，包含变量声明、查询和输出。`);
     }
 
-    if (analysis.functions.length > 0) {
-      analysis.functions.slice(0, 5).forEach(f => {
-        const cn = FUNC_CN[f.name.toUpperCase()];
-        if (cn) {
-          notes.push(`<span class="tl-func">${f.name}</span>：${cn}，${f.desc}`);
-        }
-      });
-    }
+    analysis.functions.slice(0, 8).forEach(f => {
+      const cn = FUNC_CN[f.name.toUpperCase()];
+      const desc = FUNC_DESC[f.name.toUpperCase()];
+      if (cn && desc) {
+        notes.push(`<span class="tl-func">${f.name}</span>(${cn})：${desc}`);
+      } else if (cn) {
+        notes.push(`<span class="tl-func">${f.name}</span>(${cn})`);
+      }
+    });
 
     if (construct.hasWindowFunc) {
-      notes.push('窗口函数语法：函数名() OVER (PARTITION BY 分区 ORDER BY 排序)，用于排名和分组汇总');
+      notes.push('窗口函数：函数名() OVER (PARTITION BY 分区 ORDER BY 排序)，用于分组内排名和汇总');
     }
     if (construct.hasCTE) {
-      notes.push('CTE 语法：WITH 名称 AS (查询)，可多次引用，递归查询需加 RECURSIVE');
+      notes.push('CTE 公用表表达式：WITH 名称 AS (查询)，可多次引用，支持递归');
     }
     if (construct.hasMerge) {
       notes.push('MERGE 语法：MERGE INTO 目标 USING 源 ON 条件 WHEN MATCHED THEN UPDATE WHEN NOT MATCHED THEN INSERT');
     }
+    if (construct.hasUnion) {
+      notes.push('集合运算：UNION 合并结果并去重，UNION ALL 不去重');
+    }
+    if (construct.hasCase && !whenMatch) {
+      notes.push('CASE WHEN 语法：CASE WHEN 条件 THEN 值 ELSE 值 END，用于条件判断');
+    }
 
     if (sentences.length === 0) {
-      sentences.push(`<span class="tl-clause">执行</span> ${analysis.statementType} 类型的 SQL 语句。`);
+      sentences.push(`这是一段 <span class="tl-clause">${analysis.statementType}</span> 类型的 SQL 语句。`);
     }
 
     return { sentences, notes };
