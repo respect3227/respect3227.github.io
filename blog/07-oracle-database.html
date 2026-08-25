@@ -200,24 +200,26 @@ mark{background:#ffe9a8;color:inherit;border-radius:2px;padding:0 1px}
 <script>
 (function(){
   "use strict";
-  const D = window.ORACLE_DATA;
+  const D = window.ORACLE_DATA || {};
+  const syntaxList = D.syntax || [];
+  const funcList = D.functions || [];
   const $ = s => document.querySelector(s);
   const el = (tag, cls, html) => { const e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; };
   const esc = s => String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
   /* ---------- 统计 ---------- */
   let synCount=0, exCount=0;
-  D.syntax.forEach(s=>{ synCount+=s.items.length; s.items.forEach(()=>exCount++); });
+  syntaxList.forEach(s=>{ synCount+=s.items.length; s.items.forEach(()=>exCount++); });
   let funcCount=0;
-  D.functions.forEach(c=>funcCount+=c.items.length);
+  funcList.forEach(c=>funcCount+=c.items.length);
   $('#stSyntax').textContent = synCount;
   $('#stFunc').textContent = funcCount;
-  $('#stCat').textContent = D.syntax.length + D.functions.length;
+  $('#stCat').textContent = syntaxList.length + funcList.length;
   $('#stEx').textContent = exCount + funcCount;
 
   /* ---------- 渲染语法 ---------- */
   const main = $('#main');
-  D.syntax.forEach(sec=>{
+  syntaxList.forEach(sec=>{
     const block = el('section','section-block');
     block.id = 'sec-'+sec.id;
     block.innerHTML = `
@@ -281,7 +283,7 @@ mark{background:#ffe9a8;color:inherit;border-radius:2px;padding:0 1px}
   const allBtn = el('button','cat-btn active','全部');
   allBtn.dataset.cat = 'all';
   catsWrap.appendChild(allBtn);
-  D.functions.forEach(c=>{
+  funcList.forEach(c=>{
     const b = el('button','cat-btn',`${c.category}`);
     b.dataset.cat = c.category;
     catsWrap.appendChild(b);
@@ -289,7 +291,7 @@ mark{background:#ffe9a8;color:inherit;border-radius:2px;padding:0 1px}
 
   // 展平函数列表
   const allFuncs = [];
-  D.functions.forEach(c=>c.items.forEach(f=>allFuncs.push(Object.assign({category:c.category, icon:c.icon}, f))));
+  funcList.forEach(c=>c.items.forEach(f=>allFuncs.push(Object.assign({category:c.category, icon:c.icon}, f))));
 
   const grid = $('#funcGrid');
   const countEl = $('#funcCount');
@@ -358,14 +360,14 @@ mark{background:#ffe9a8;color:inherit;border-radius:2px;padding:0 1px}
 
   /* ---------- 侧边栏 ---------- */
   const sideSyn = $('#sideSyntax');
-  D.syntax.forEach(s=>{
+  syntaxList.forEach(s=>{
     const a = el('a','side-link');
     a.innerHTML = `<i class="fas ${s.icon}"></i><span>${esc(s.title)}</span>`;
     a.dataset.target = 'sec-'+s.id;
     sideSyn.appendChild(a);
   });
   const sideFunc = $('#sideFunc');
-  D.functions.forEach(c=>{
+  funcList.forEach(c=>{
     const a = el('a','side-link');
     a.innerHTML = `<i class="fas ${c.icon}"></i><span>${esc(c.category)}</span>`;
     a.dataset.target = 'sec-functions';
@@ -427,8 +429,8 @@ mark{background:#ffe9a8;color:inherit;border-radius:2px;padding:0 1px}
     gsTimer = setTimeout(()=>{
       // 优先匹配语法条目，其次函数
       const k = v.toLowerCase();
-      const synHit = D.syntax.flatMap(s=>s.items.map(it=>({sec:s,it})))
-        .find(x=>x.it.name.toLowerCase().includes(k) || x.it.tags.some(t=>t.toLowerCase().includes(k)) || x.it.syntax.toLowerCase().includes(k));
+      const synHit = syntaxList.flatMap(s=>s.items.map(it=>({sec:s,it})))
+        .find(x=>x.it.name.toLowerCase().includes(k) || (x.it.tags||[]).some(t=>t.toLowerCase().includes(k)) || x.it.syntax.toLowerCase().includes(k));
       if(synHit){
         const node = document.getElementById('item-'+slug(synHit.it.name));
         if(node){ node.scrollIntoView({behavior:'smooth',block:'start'}); flash(node); return; }

@@ -2,7 +2,7 @@
  * Oracle 数据库知识点数据集
  * 数据驱动渲染：syntax = 语法分类与示例；functions = 函数库（可搜索）
  */
-const ORACLE_DATA = {
+window.ORACLE_DATA = {
   /* ============================ 语法部分 ============================ */
   syntax: [
     {
