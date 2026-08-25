@@ -1293,18 +1293,33 @@ END;`
     return `"${s}"`;
   }
 
-  function translateCondition(expr, fieldName) {
+  function translateCondition(expr, fieldName, _betweenStore) {
     if (!expr) return '';
     let e = expr.trim();
 
+    if (!_betweenStore) _betweenStore = [];
+
+    e = e.replace(/(\w+)\s+BETWEEN\s+(\S+)\s+AND\s+(\S+)/gi, function(match, col, low, high) {
+      const idx = _betweenStore.length;
+      _betweenStore.push({col: col, low: low, high: high});
+      return `__BW${idx}__`;
+    });
+
     const orParts = splitByKeyword(e, '\\bOR\\b');
     if (orParts.length > 1) {
-      return orParts.map(p => translateCondition(p.trim(), fieldName)).join('，或者');
+      return orParts.map(p => translateCondition(p.trim(), fieldName, _betweenStore)).join('，或者');
     }
 
     const andParts = splitByKeyword(e, '\\bAND\\b');
     if (andParts.length > 1) {
-      return andParts.map(p => translateCondition(p.trim(), fieldName)).join('，并且');
+      return andParts.map(p => translateCondition(p.trim(), fieldName, _betweenStore)).join('，并且');
+    }
+
+    const bwMatch = e.match(/__BW(\d+)__/);
+    if (bwMatch) {
+      const idx = parseInt(bwMatch[1]);
+      const b = _betweenStore[idx];
+      if (b) return `字段 ${b.col.toUpperCase()} 介于 ${b.low} 和 ${b.high} 之间`;
     }
 
     const instrMatch = e.match(/INSTR\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*'([^']*)'\s*\)\s*([<>]=?|!=)\s*(\d+)/i);
@@ -1345,11 +1360,6 @@ END;`
     const regexLikeMatch = e.match(/REGEXP_LIKE\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*'([^']*)'\s*\)/i);
     if (regexLikeMatch) {
       return `字段 ${regexLikeMatch[1].toUpperCase()} 匹配正则表达式"${regexLikeMatch[2]}"`;
-    }
-
-    const betweenMatch = e.match(/([A-Za-z_][A-Za-z0-9_]*)\s+BETWEEN\s+(\S+)\s+AND\s+(\S+)/i);
-    if (betweenMatch) {
-      return `字段 ${betweenMatch[1].toUpperCase()} 介于 ${betweenMatch[2]} 和 ${betweenMatch[3]} 之间`;
     }
 
     const inMatch = e.match(/([A-Za-z_][A-Za-z0-9_]*)\s+IN\s*\(([^)]+)\)/i);
