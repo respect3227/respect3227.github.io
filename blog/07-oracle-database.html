@@ -3,8 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Oracle 数据库从 0 到精通 · 语法与函数速查</title>
 <meta name="description" content="Oracle 数据库完整教程：全部 SQL/PL-SQL 语法、示例与函数库(可搜索)，从入门到精通。">
+<meta http-equiv="Cache-Control" content="public, max-age=3600, stale-while-revalidate=86400">
+<title>Oracle 数据库从 0 到精通 · 语法与函数速查</title>
+
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+<link rel="preload" href="oracle-data.js" as="script">
 <link rel="stylesheet" href="../style.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
@@ -137,6 +142,21 @@ mark{background:#ffe9a8;color:inherit;border-radius:2px;padding:0 1px}
 
 /* 暗色代码块圆角修正 */
 :not(pre)>code[class*="language-"]{background:#1e1e2e;color:#ddd;padding:2px 5px;border-radius:4px;font-size:.85rem}
+
+/* ===== 性能优化 ===== */
+.section-block{content-visibility:auto;contain-intrinsic-size:0 800px}
+.item-card{content-visibility:auto;contain-intrinsic-size:0 300px}
+.func-card{content-visibility:auto;contain-intrinsic-size:0 200px}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.func-grid{contain:layout style paint}
+.func-card{contain:content}
 </style>
 </head>
 <body>
@@ -198,14 +218,27 @@ mark{background:#ffe9a8;color:inherit;border-radius:2px;padding:0 1px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
 <script src="oracle-data.js"></script>
 <script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
 (function(){
   "use strict";
   const D = window.ORACLE_DATA || {};
   const syntaxList = D.syntax || [];
   const funcList = D.functions || [];
   const $ = s => document.querySelector(s);
-  const el = (tag, cls, html) => { const e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; };
   const esc = s => String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  const PAGE_SIZE = 24;
+  let currentPage = 0;
+  let filteredFuncs = [];
+  let activeCat = 'all';
+  let kw = '';
+
+  const main = $('#main');
 
   /* ---------- 统计 ---------- */
   let synCount=0, exCount=0;
@@ -217,137 +250,159 @@ mark{background:#ffe9a8;color:inherit;border-radius:2px;padding:0 1px}
   $('#stCat').textContent = syntaxList.length + funcList.length;
   $('#stEx').textContent = exCount + funcCount;
 
-  /* ---------- 渲染语法 ---------- */
-  const main = $('#main');
+  /* ---------- 渲染语法（分块） ---------- */
+  const syntaxFragments = [];
   syntaxList.forEach(sec=>{
-    const block = el('section','section-block');
+    const block = document.createElement('section');
+    block.className = 'section-block';
     block.id = 'sec-'+sec.id;
-    block.innerHTML = `
-      <div class="sec-head">
-        <div class="ico"><i class="fas ${sec.icon}"></i></div>
-        <div>
-          <h2>${esc(sec.title)}</h2>
-          <div class="desc">${esc(sec.desc)}</div>
-        </div>
-      </div>`;
+    block.innerHTML = '<div class="sec-head"><div class="ico"><i class="fas '+sec.icon+'"></i></div><div><h2>'+esc(sec.title)+'</h2><div class="desc">'+esc(sec.desc)+'</div></div></div>';
     sec.items.forEach(it=>{
-      const card = el('div','item-card');
+      const card = document.createElement('div');
+      card.className = 'item-card';
       card.id = 'item-'+slug(it.name);
-      const tags = (it.tags||[]).map((t,i)=>`<span class="tag${i===0?' t-key':''}">${esc(t)}</span>`).join('');
-      const tips = it.tips ? `<div class="item-tips"><i class="fas fa-lightbulb"></i><span>${esc(it.tips)}</span></div>` : '';
-      const result = it.result ? `<div class="item-result">${esc(it.result)}</div>` : '';
-      card.innerHTML = `
-        <div class="item-head">
-          <h3 class="item-name">${esc(it.name)}</h3>
-          <div class="tags">${tags}</div>
-        </div>
-        <div class="item-desc">${esc(it.desc)}</div>
-        <div class="item-syntax">${esc(it.syntax)}</div>
-        <div class="label"><i class="fas fa-play-circle"></i>示例</div>
-        <div class="code-wrap">
-          <button class="copy-btn"><i class="fas fa-copy"></i> 复制</button>
-          <pre><code class="language-sql">${esc(it.example)}</code></pre>
-        </div>
-        ${result}
-        ${tips}`;
+      const tags = (it.tags||[]).map((t,i)=>'<span class="tag'+(i===0?' t-key':'')+'">'+esc(t)+'</span>').join('');
+      const tips = it.tips ? '<div class="item-tips"><i class="fas fa-lightbulb"></i><span>'+esc(it.tips)+'</span></div>' : '';
+      const result = it.result ? '<div class="item-result">'+esc(it.result)+'</div>' : '';
+      card.innerHTML = '<div class="item-head"><h3 class="item-name">'+esc(it.name)+'</h3><div class="tags">'+tags+'</div></div><div class="item-desc">'+esc(it.desc)+'</div><div class="item-syntax">'+esc(it.syntax)+'</div><div class="label"><i class="fas fa-play-circle"></i>示例</div><div class="code-wrap"><button class="copy-btn"><i class="fas fa-copy"></i> 复制</button><pre><code class="language-sql">'+esc(it.example)+'</code></pre></div>'+result+tips;
       block.appendChild(card);
     });
-    main.appendChild(block);
+    syntaxFragments.push(block);
   });
 
+  syntaxFragments.forEach(b => main.appendChild(b));
+
   /* ---------- 渲染函数库 ---------- */
-  const funcBlock = el('section','section-block func-section');
+  const funcBlock = document.createElement('section');
+  funcBlock.className = 'section-block func-section';
   funcBlock.id = 'sec-functions';
-  funcBlock.innerHTML = `
-    <div class="sec-head">
-      <div class="ico"><i class="fas fa-function"></i></div>
-      <div>
-        <h2>内置函数速查库</h2>
-        <div class="desc">输入函数名/作用/标签即时筛选，支持模糊匹配。共 ${funcCount} 个函数。</div>
-      </div>
-    </div>
-    <div class="func-toolbar">
-      <div class="func-search" id="funcSearchWrap">
-        <i class="fas fa-search"></i>
-        <input id="funcSearch" type="search" placeholder="搜索函数名 / 作用 / 标签，如 NVL、日期、排名..." autocomplete="off">
-        <button class="clear" id="funcClear" aria-label="清除"><i class="fas fa-times"></i></button>
-      </div>
-      <div class="func-cats" id="funcCats"></div>
-      <span class="func-count" id="funcCount"></span>
-    </div>
-    <div class="func-grid" id="funcGrid"></div>`;
+  funcBlock.innerHTML = '<div class="sec-head"><div class="ico"><i class="fas fa-function"></i></div><div><h2>内置函数速查库</h2><div class="desc">输入函数名/作用/标签即时筛选，支持模糊匹配。共 '+funcCount+' 个函数。</div></div></div><div class="func-toolbar"><div class="func-search" id="funcSearchWrap"><i class="fas fa-search"></i><input id="funcSearch" type="search" placeholder="搜索函数名 / 作用 / 标签，如 NVL、日期、排名..." autocomplete="off"><button class="clear" id="funcClear" aria-label="清除"><i class="fas fa-times"></i></button></div><div class="func-cats" id="funcCats"></div><span class="func-count" id="funcCount"></span></div><div class="func-grid" id="funcGrid"></div><div id="loadMoreSentinel" style="text-align:center;padding:20px;color:#8a93a3;font-size:.85rem"></div>';
   main.appendChild(funcBlock);
 
-  // 函数分类按钮
   const catsWrap = $('#funcCats');
-  const allBtn = el('button','cat-btn active','全部');
+  const allBtn = document.createElement('button');
+  allBtn.className = 'cat-btn active';
+  allBtn.textContent = '全部';
   allBtn.dataset.cat = 'all';
   catsWrap.appendChild(allBtn);
   funcList.forEach(c=>{
-    const b = el('button','cat-btn',`${c.category}`);
+    const b = document.createElement('button');
+    b.className = 'cat-btn';
+    b.textContent = c.category;
     b.dataset.cat = c.category;
     catsWrap.appendChild(b);
   });
 
-  // 展平函数列表
   const allFuncs = [];
   funcList.forEach(c=>c.items.forEach(f=>allFuncs.push(Object.assign({category:c.category, icon:c.icon}, f))));
+  filteredFuncs = allFuncs;
 
   const grid = $('#funcGrid');
   const countEl = $('#funcCount');
-  let activeCat = 'all';
-  let kw = '';
+  const sentinel = $('#loadMoreSentinel');
 
   function hl(text, key){
     if(!key) return esc(text);
     const idx = String(text).toLowerCase().indexOf(key.toLowerCase());
     if(idx<0) return esc(text);
-    return esc(text.slice(0,idx)) + '<mark>' + esc(text.slice(idx,idx+key.length)) + '</mark>' + esc(text.slice(idx+key.length));
+    return esc(text.slice(0,idx))+'<mark>'+esc(text.slice(idx,idx+key.length))+'</mark>'+esc(text.slice(idx+key.length));
   }
 
-  function renderFunc(){
-    grid.innerHTML = '';
-    const k = kw.trim().toLowerCase();
-    const list = allFuncs.filter(f=>{
-      const catOk = activeCat==='all' || f.category===activeCat;
-      if(!catOk) return false;
-      if(!k) return true;
-      return f.name.toLowerCase().includes(k) ||
-             f.desc.toLowerCase().includes(k) ||
-             f.syntax.toLowerCase().includes(k) ||
-             (f.tags||[]).some(t=>t.toLowerCase().includes(k));
-    });
-    countEl.textContent = `命中 ${list.length} / ${allFuncs.length}`;
-    if(list.length===0){
-      grid.innerHTML = `<div class="no-result"><i class="fas fa-magnifying-glass"></i>未找到匹配的函数，试试其他关键词。</div>`;
-      return;
-    }
+  function renderFuncPage(page){
+    const start = page * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    const items = filteredFuncs.slice(start, end);
     const frag = document.createDocumentFragment();
-    list.forEach(f=>{
-      const card = el('div','func-card');
-      card.innerHTML = `
-        <div class="fname">${hl(f.name, kw)}</div>
-        <span class="fsyn">${esc(f.syntax)}</span>
-        <div class="fdesc">${hl(f.desc, kw)}</div>
-        <div class="fex">${esc(f.example)}</div>
-        <span class="fres">↳ ${esc(f.result||'')}</span>
-        <div class="ftags">${(f.tags||[]).map(t=>`<span class="ftag">${esc(t)}</span>`).join('')}</div>`;
+    items.forEach(f=>{
+      const card = document.createElement('div');
+      card.className = 'func-card';
+      card.innerHTML = '<div class="fname">'+hl(f.name, kw)+'</div><span class="fsyn">'+esc(f.syntax)+'</span><div class="fdesc">'+hl(f.desc, kw)+'</div><div class="fex">'+esc(f.example)+'</div><span class="fres">↳ '+esc(f.result||'')+'</span><div class="ftags">'+(f.tags||[]).map(t=>'<span class="ftag">'+esc(t)+'</span>').join('')+'</div>';
       frag.appendChild(card);
     });
     grid.appendChild(frag);
+    highlightNewCodes(frag);
   }
-  renderFunc();
 
-  // 函数搜索交互
+  function renderFunc(reset){
+    if(reset){
+      grid.textContent = '';
+      currentPage = 0;
+    }
+    const k = kw.trim().toLowerCase();
+    filteredFuncs = allFuncs.filter(f=>{
+      const catOk = activeCat==='all' || f.category===activeCat;
+      if(!catOk) return false;
+      if(!k) return true;
+      return f.name.toLowerCase().includes(k) || f.desc.toLowerCase().includes(k) || f.syntax.toLowerCase().includes(k) || (f.tags||[]).some(t=>t.toLowerCase().includes(k));
+    });
+    countEl.textContent = '命中 '+filteredFuncs.length+' / '+allFuncs.length;
+    if(filteredFuncs.length===0){
+      grid.innerHTML = '<div class="no-result"><i class="fas fa-magnifying-glass"></i>未找到匹配的函数，试试其他关键词。</div>';
+      sentinel.textContent = '';
+      return;
+    }
+    if(reset){
+      renderFuncPage(0);
+      const totalPages = Math.ceil(filteredFuncs.length / PAGE_SIZE);
+      sentinel.textContent = totalPages > 1 ? '向下滚动加载更多... ('+PAGE_SIZE+' / 页)' : '';
+    } else {
+      const nextPage = currentPage + 1;
+      renderFuncPage(nextPage);
+      currentPage = nextPage;
+      const remaining = filteredFuncs.length - (currentPage+1)*PAGE_SIZE;
+      sentinel.textContent = remaining > 0 ? '向下滚动加载更多... ('+PAGE_SIZE+' / 页, 剩余 '+remaining+')' : '已加载全部';
+    }
+  }
+
+  renderFunc(true);
+
+  const io = new IntersectionObserver(entries=>{
+    entries.forEach(en=>{
+      if(en.isIntersecting && en.target === sentinel && filteredFuncs.length > (currentPage+1)*PAGE_SIZE){
+        renderFunc(false);
+      }
+    });
+  }, {rootMargin:'200px'});
+  io.observe(sentinel);
+
+  /* ---------- 懒加载代码高亮 ---------- */
+  const codeObserver = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        const pre = entry.target;
+        if(!pre.dataset.highlighted){
+          if(window.Prism){ Prism.highlightElement(pre.querySelector('code')); }
+          pre.dataset.highlighted = 'true';
+        }
+        codeObserver.unobserve(pre);
+      }
+    });
+  }, {rootMargin:'300px'});
+
+  function highlightNewCodes(container){
+    const pres = container.querySelectorAll('pre');
+    pres.forEach(pre=>{
+      if(!pre.dataset.highlighted){
+        codeObserver.observe(pre);
+      }
+    });
+  }
+
+  const initialCodes = main.querySelectorAll('pre');
+  initialCodes.forEach(pre=>codeObserver.observe(pre));
+
+  /* ---------- 函数搜索交互 ---------- */
   const fsInput = $('#funcSearch');
   const fsWrap = $('#funcSearchWrap');
+  let searchRafId = null;
   fsInput.addEventListener('input', e=>{
     kw = e.target.value;
     fsWrap.classList.toggle('has-text', kw.length>0);
-    renderFunc();
+    if(searchRafId) cancelAnimationFrame(searchRafId);
+    searchRafId = requestAnimationFrame(()=>renderFunc(true));
   });
   $('#funcClear').addEventListener('click', ()=>{
-    fsInput.value=''; kw=''; fsWrap.classList.remove('has-text'); renderFunc(); fsInput.focus();
+    fsInput.value=''; kw=''; fsWrap.classList.remove('has-text'); renderFunc(true); fsInput.focus();
   });
   catsWrap.addEventListener('click', e=>{
     const b = e.target.closest('.cat-btn');
@@ -355,26 +410,27 @@ mark{background:#ffe9a8;color:inherit;border-radius:2px;padding:0 1px}
     catsWrap.querySelectorAll('.cat-btn').forEach(x=>x.classList.remove('active'));
     b.classList.add('active');
     activeCat = b.dataset.cat;
-    renderFunc();
+    renderFunc(true);
   });
 
   /* ---------- 侧边栏 ---------- */
   const sideSyn = $('#sideSyntax');
   syntaxList.forEach(s=>{
-    const a = el('a','side-link');
-    a.innerHTML = `<i class="fas ${s.icon}"></i><span>${esc(s.title)}</span>`;
+    const a = document.createElement('a');
+    a.className = 'side-link';
+    a.innerHTML = '<i class="fas '+s.icon+'"></i><span>'+esc(s.title)+'</span>';
     a.dataset.target = 'sec-'+s.id;
     sideSyn.appendChild(a);
   });
   const sideFunc = $('#sideFunc');
   funcList.forEach(c=>{
-    const a = el('a','side-link');
-    a.innerHTML = `<i class="fas ${c.icon}"></i><span>${esc(c.category)}</span>`;
+    const a = document.createElement('a');
+    a.className = 'side-link';
+    a.innerHTML = '<i class="fas '+c.icon+'"></i><span>'+esc(c.category)+'</span>';
     a.dataset.target = 'sec-functions';
     sideFunc.appendChild(a);
   });
 
-  // 平滑滚动 + 高亮
   const sideLinks = document.querySelectorAll('.side-link');
   sideLinks.forEach(a=>{
     a.addEventListener('click', e=>{
@@ -385,7 +441,6 @@ mark{background:#ffe9a8;color:inherit;border-radius:2px;padding:0 1px}
     });
   });
 
-  // 滚动高亮当前章节
   const sections = [...document.querySelectorAll('.section-block')];
   const obs = new IntersectionObserver((entries)=>{
     entries.forEach(en=>{
@@ -427,7 +482,6 @@ mark{background:#ffe9a8;color:inherit;border-radius:2px;padding:0 1px}
     const v = e.target.value.trim();
     if(!v) return;
     gsTimer = setTimeout(()=>{
-      // 优先匹配语法条目，其次函数
       const k = v.toLowerCase();
       const synHit = syntaxList.flatMap(s=>s.items.map(it=>({sec:s,it})))
         .find(x=>x.it.name.toLowerCase().includes(k) || (x.it.tags||[]).some(t=>t.toLowerCase().includes(k)) || x.it.syntax.toLowerCase().includes(k));
@@ -435,17 +489,17 @@ mark{background:#ffe9a8;color:inherit;border-radius:2px;padding:0 1px}
         const node = document.getElementById('item-'+slug(synHit.it.name));
         if(node){ node.scrollIntoView({behavior:'smooth',block:'start'}); flash(node); return; }
       }
-      // 函数
       const fnHit = allFuncs.find(f=>f.name.toLowerCase().includes(k));
+      fsInput.value = v; kw = v; fsWrap.classList.add('has-text');
       if(fnHit){
-        fsInput.value = v; kw = v; fsWrap.classList.add('has-text'); renderFunc();
-        document.getElementById('sec-functions').scrollIntoView({behavior:'smooth',block:'start'});
-      } else {
-        fsInput.value = v; kw = v; fsWrap.classList.add('has-text'); renderFunc();
-        document.getElementById('sec-functions').scrollIntoView({behavior:'smooth',block:'start'});
+        activeCat = fnHit.category;
+        catsWrap.querySelectorAll('.cat-btn').forEach(x=>x.classList.toggle('active', x.dataset.cat===activeCat));
       }
+      renderFunc(true);
+      document.getElementById('sec-functions').scrollIntoView({behavior:'smooth',block:'start'});
     }, 280);
   });
+
   function flash(node){
     node.style.transition='box-shadow .4s';
     node.style.boxShadow='0 0 0 3px rgba(199,70,52,.5)';
@@ -454,9 +508,7 @@ mark{background:#ffe9a8;color:inherit;border-radius:2px;padding:0 1px}
 
   /* ---------- 工具：slug ---------- */
   function slug(s){
-    return String(s).toLowerCase()
-      .replace(/[^\w\u4e00-\u9fa5]+/g,'-')
-      .replace(/^-+|-+$/g,'');
+    return String(s).toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g,'-').replace(/^-+|-+$/g,'');
   }
 
   /* ---------- 回到顶部 / 移动菜单 ---------- */
@@ -474,8 +526,9 @@ mark{background:#ffe9a8;color:inherit;border-radius:2px;padding:0 1px}
     document.getElementById('sidebar').classList.toggle('open');
   });
 
-  /* ---------- 代码高亮 ---------- */
-  if(window.Prism){ Prism.highlightAllUnder(main); }
+  /* ---------- 初始渲染：首屏代码高亮 ---------- */
+  const firstBatch = main.querySelectorAll('pre');
+  firstBatch.forEach(pre=>codeObserver.observe(pre));
 })();
 </script>
 </body>
